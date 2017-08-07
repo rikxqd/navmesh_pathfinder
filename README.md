@@ -1,0 +1,3 @@
+# navmesh_pathfinder
+基于unity3d的navigation的寻路
+从unity3d导出mesh数据，基于数据实现的寻路算法
