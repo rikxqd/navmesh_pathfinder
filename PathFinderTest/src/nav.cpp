@@ -394,7 +394,6 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	return mesh_ctx;
 }
 
-
 bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)
 {
 	struct NavNode* node = find_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
@@ -410,7 +409,7 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 			return true;
 		}
 
-		for (int i =0;i < node->size;i++)
+		for (int i = 0;i < node->size;i++)
 		{
 			struct Border* border = get_border_with_id(ctx,node->border[i]);
 
@@ -421,10 +420,10 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 			vector3_sub(pt3,pt0,&vt30);
 			vector3_sub(pt4,pt0,&vt40);
 
-			double forward_a = cross(&vt30,&vt10);
-			double forward_b = cross(&vt40,&vt10);
+			double direct_a = cross(&vt30,&vt10);
+			double direct_b = cross(&vt40,&vt10);
 
-			if (forward_a < 0 && forward_b > 0)
+			if (direct_a < 0 && direct_b > 0)
 			{
 				int next = -1;
 				if (border->node[0] !=-1)
@@ -435,13 +434,8 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 						next = border->node[0];
 				}
 				else
-				{
-					if (border->node[1] != -1)
-					{
-						if (border->node[1] != node->id)
-							next = border->node[1];
-					}
-				}
+					assert(border->node[1] == node->id);
+				
 				if (next == -1)
 				{
 					cross_pt(pt3,pt4,pt1,pt0,result);
