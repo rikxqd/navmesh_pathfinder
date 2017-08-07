@@ -34,12 +34,6 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="minheap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="nav.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="rapidjson\allocators.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -127,6 +121,15 @@
     <ClInclude Include="rapidjson\msinttypes\stdint.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\minheap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nav.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathFinderTest.cpp">
@@ -138,13 +141,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="list.h">
+    <ClCompile Include="src\minheap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="minheap.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="nav.cpp">
+    <ClCompile Include="src\nav.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

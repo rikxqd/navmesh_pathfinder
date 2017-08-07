@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "stdafx.h"
+
 
 #ifndef _MSC_VER
 #include <stdbool.h>
