@@ -149,9 +149,6 @@
     <ClCompile Include="nav.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="nav_path_finder.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="PathFinderTest.cpp" />
     <ClCompile Include="PathFinderTestDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

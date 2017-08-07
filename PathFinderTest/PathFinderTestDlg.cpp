@@ -311,7 +311,7 @@ void CPathFinderTestDlg::OnBnClickedButton1()
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
 
-		polyPath = astar_poly_path(mesh_ctx,&ptBegin,&ptOver,resultPath,&sizePath);
+		polyPath = astar_find(mesh_ctx,&ptBegin,&ptOver,resultPath,&sizePath);
 	}
 	Invalidate();
 }
@@ -763,7 +763,7 @@ void CPathFinderTestDlg::OnBnClickedButton2()
 		vt1.z = (double)(vtOver->z-yoffset)/scale;
 
 		vector3 vt;
-		bool ok = raycast(mesh_ctx,polyBegin,&vt0,&vt1,&vt);
+		bool ok = raycast(mesh_ctx,&vt0,&vt1,&vt);
 		if (ok)
 		{
 			POINT from;

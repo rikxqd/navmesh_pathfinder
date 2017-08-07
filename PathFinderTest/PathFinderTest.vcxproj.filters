@@ -147,9 +147,6 @@
     <ClCompile Include="nav.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="nav_path_finder.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PathFinderTest.rc">
