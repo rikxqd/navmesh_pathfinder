@@ -452,13 +452,20 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 	return false;
 }
 
+
+#define CLEAR_NODE(n) do  \
+{\
+	n->link_parent = NULL; \
+	n->link_border = -1; \
+	n->F = n->G = n->H = 0; \
+	n->elt.index = 0; \
+} while (false);
+
+
 static inline void heap_clear(struct element* elt) 
 {
 	struct NavNode *n = (struct NavNode*)((int8_t*)elt - sizeof(struct list_node));
-	n->link_parent = NULL;
-	n->link_border = -1;
-	n->F = n->G = n->H = 0;
-	n->elt.index = 0;
+	CLEAR_NODE(n);
 }
 
 #define RESET(mesh_ctx) do \
@@ -466,24 +473,35 @@ static inline void heap_clear(struct element* elt)
 struct NavNode * n = NULL; \
 	while ((n = (struct NavNode*)LIST_POP(&mesh_ctx->closelist))) {\
 	\
-	n->G = n->H = n->F = 0; \
+	CLEAR_NODE(n);\
 	}\
 	minheap_clear(mesh_ctx->openlist, heap_clear); \
 } while (false);
 
-#define CLEAR_NODE(n) do  \
-{\
-	n->link_parent = NULL; \
-	n->link_border = NULL; \
-	n->F = n->G = n->H = 0; \
-	n->elt.index = 0; \
-} while (false);
 
-void node_reset(struct NavNode* node)
+
+struct NavNode* next_border(struct MeshContext* ctx, NavNode* node,struct vector3* wp,int *link_border)
 {
-	CLEAR_NODE(node);
+	struct vector3 vt0,vt1;
+	*link_border = node->link_border;
+	while (*link_border != -1)
+	{
+		struct Border* border = get_border_with_id(ctx,*link_border);
+		vector3_sub(&ctx->vertices[border->a],wp,&vt0);
+		vector3_sub(&ctx->vertices[border->b],wp,&vt1);
+		if ((vt0.x == 0 && vt0.z == 0) || (vt1.x == 0 && vt1.z == 0))
+		{
+			node = node->link_parent;
+			*link_border = node->link_border;
+		}
+		else
+			break;
+	}
+	if (*link_border != -1)
+		return node;
+	
+	return NULL;
 }
-
 
 struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct NavNode * node,int* size)
 {
@@ -543,9 +561,11 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 					result[index].z = pt_wp->z;
 					index++;
 
-					link_border = left_node->link_border;
+					left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
+					if (left_node == NULL)
+						assert(0);
+					
 					border = get_border_with_id(mesh_ctx,link_border);
-
 					pt_left.x = mesh_ctx->vertices[border->a].x;
 					pt_left.z = mesh_ctx->vertices[border->a].z;
 
@@ -572,9 +592,11 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 					result[index].z = pt_wp->z;
 					index++;
 
-					link_border = right_node->link_border;
+					right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
+					if (right_node == NULL)
+						assert(0);
+					
 					border = get_border_with_id(mesh_ctx,link_border);
-
 					pt_left.x = mesh_ctx->vertices[border->a].x;
 					pt_left.z = mesh_ctx->vertices[border->a].z;
 
@@ -630,9 +652,11 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 		{
 			vector3_copy(pt_wp,&pt_left);
 
-			link_border = left_node->link_border;
+			left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
+			if (left_node == NULL)
+				assert(0);
+			
 			border = get_border_with_id(mesh_ctx,link_border);
-
 			vector3_copy(&pt_left,&mesh_ctx->vertices[border->a]);
 			vector3_copy(&pt_right,&mesh_ctx->vertices[border->b]);
 
@@ -654,9 +678,11 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 		{
 			vector3_copy(pt_wp,&pt_right);
 
-			link_border = right_node->link_border;
+			right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
+			if (right_node == NULL)
+				assert(0);
+			
 			border = get_border_with_id(mesh_ctx,link_border);
-
 			vector3_copy(&pt_left,&mesh_ctx->vertices[border->a]);
 			vector3_copy(&pt_right,&mesh_ctx->vertices[border->b]);
 
@@ -703,7 +729,8 @@ struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,stru
 		{
 			result = make_waypoint(mesh_ctx,pt0,pt1,current,size);
 			RESET((mesh_ctx));
-			return current;
+			CLEAR_NODE(current);
+			return NULL;
 		}
 
 		LIST_PUSH((&mesh_ctx->closelist),((struct list_node*)current));
@@ -731,6 +758,8 @@ struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,stru
 					linked_node->G = current->G + get_cost(current,linked_node);
 					linked_node->H = get_cost(linked_node,to);
 					linked_node->F = linked_node->G + linked_node->H;
+					assert(linked_node->link_border == -1);
+					assert(linked_node->link_parent == NULL);
 					linked_node->link_parent = current;
 					linked_node->link_border = linked_node->reserve;
 					minheap_push(mesh_ctx->openlist, &linked_node->elt);

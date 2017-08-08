@@ -424,16 +424,16 @@ void CPathFinderTestDlg::DrawMap()
 			tmp = tmp->link_parent;
 		}
 
-		CPen pen(PS_SOLID, 1, RGB(255, 255, 255));
-		dc.SelectObject(&pen);
-		dc.MoveTo(resultPath[0].x*scale+xoffset,resultPath[0].z*scale+yoffset);
-		for (int i = 1;i < sizePath;i++)
-		{
-			dc.LineTo(resultPath[i].x*scale+xoffset,resultPath[i].z*scale+yoffset);
-			dc.MoveTo(resultPath[i].x*scale+xoffset,resultPath[i].z*scale+yoffset);
-		}
+		
 	}
-
+	CPen pen1(PS_SOLID, 1, RGB(255, 255, 255));
+	dc.SelectObject(&pen1);
+	dc.MoveTo(resultPath[0].x*scale+xoffset,resultPath[0].z*scale+yoffset);
+	for (int i = 1;i < sizePath;i++)
+	{
+		dc.LineTo(resultPath[i].x*scale+xoffset,resultPath[i].z*scale+yoffset);
+		dc.MoveTo(resultPath[i].x*scale+xoffset,resultPath[i].z*scale+yoffset);
+	}
 	if (vtBegin != NULL)
 	{
 		CBrush brush(RGB(50,50,50));
@@ -615,6 +615,10 @@ void CPathFinderTestDlg::DrawBegin(CPoint& pos)
 	else if (node->size == 5)
 	{
 		temp.Format(_T("%d %d %d %d %d %d"), node->id,node->poly[0],node->poly[1],node->poly[2],node->poly[3],node->poly[4]);
+	}
+	else if (node->size == 6)
+	{
+		temp.Format(_T("%d %d %d %d %d %d %d"), node->id,node->poly[0],node->poly[1],node->poly[2],node->poly[3],node->poly[4],node->poly[5]);
 	}
 
 	LPCTSTR str = temp;
