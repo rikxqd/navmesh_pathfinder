@@ -8,3 +8,10 @@
 忽略障碍寻路
 ![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/61ffe57498e4545d3b5236e61e75e3d.png)
 
+两点直线，不忽略障碍
+![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/QQ图片20170809211301.png)
+
+两点直线，忽略障碍
+![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/QQ图片20170809211305.png)
+
+
