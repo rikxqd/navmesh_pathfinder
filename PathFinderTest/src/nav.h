@@ -22,6 +22,12 @@ struct vector3
 	double z;
 };
 
+struct MeshMask
+{
+	int *mask;
+	int size;
+};
+
 struct NavNode
 {
 	struct list_node list_head;
@@ -32,6 +38,8 @@ struct NavNode
 	int* poly;
 	int* border;
 	int size;
+
+	int mask;
 
 	struct vector3 center;
 
@@ -71,6 +79,8 @@ struct MeshContext
 	struct NavNode* node;
 	int size;
 
+	struct MeshMask mask_ctx;
+
 	struct minheap* openlist;
 	struct list closelist;
 	struct list linked;
@@ -90,5 +100,5 @@ struct NavNode* find_node_with_pos(struct MeshContext* mesh_ctx,double x,double 
 struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
 struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct vector3*&result,int * size);
 bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
-
+void set_mask(struct MeshMask* ctx,int mask,int enable);
 #endif

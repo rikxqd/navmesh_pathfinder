@@ -151,14 +151,14 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 
 	const rapidjson::Value& p = _config["p"];
 	int** p_ptr = (int**)malloc(sizeof(*p_ptr) * p.Size());
+	int a = p.Size();
 	for (int i = 0;i < p.Size();i++)
 	{
 		const rapidjson::Value& tmp = p[i];
-		p_ptr[i] = (int*)malloc(sizeof(int) *(tmp.Size()+1));
-		p_ptr[i][0] = tmp.Size();
+		p_ptr[i] = (int*)malloc(sizeof(int) *(tmp.Size()));
 		for (int j = 0;j < tmp.Size();j++)
 		{
-			p_ptr[i][j+1] = tmp[j].GetInt();
+			p_ptr[i][j] = tmp[j].GetInt();
 		}
 	}
 	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
@@ -354,18 +354,30 @@ void CPathFinderTestDlg::DrawMap()
 	CBrush brush(RGB(255,0,0));
 	CBrush *obrush = dc.SelectObject(&brush);
 
+	CBrush brushDoor(RGB(88,88,0));
 	for (int i = 0;i < mesh_ctx->size;i++)
 	{
 		struct NavNode* node = find_node(mesh_ctx,i);
 		CPoint* pt = new CPoint[node->size];
+
+		if (node->mask == 0 )
+		{
+			dc.SelectObject(&brush);
+		}
+		else
+		{
+			dc.SelectObject(&brushDoor);
+		}
 		for (int j = 0; j < node->size;j++)
 		{
 			struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
+			
 			pt[j].x = pos->x*scale+xoffset;
 			pt[j].y = pos->z*scale+yoffset;
 		}
 		dc.Polygon(pt,node->size);
 		delete[] pt;
+		dc.SelectObject(obrush);
 	}
 
 	
@@ -826,13 +838,13 @@ void CPathFinderTestDlg::OnLButtonUp(UINT nFlags, CPoint point)
 void CPathFinderTestDlg::OnBnClickedButton3()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	if (_beginRect == NULL)
+	if (polyBegin == NULL)
 	{
 		CString str;
 		str.Format(_T("始点还没设置"));
 		MessageBox(str);
 	}
-	else if (_overRect == NULL)
+	else if (polyOver == NULL)
 	{
 		CString str;
 		str.Format(_T("终点还没设置"));
@@ -840,37 +852,25 @@ void CPathFinderTestDlg::OnBnClickedButton3()
 	}
 	else
 	{
-	/*	pathfinder_context* finder = finder_create(1);
-		finder_init(finder,0, 101, _width, _heigh, _mapData);
-		finder_mask_set(finder, 0, 0, 0);
-		finder_mask_set(finder, 0, 1, 1);
-		finder_mask_set(finder, 0, 2, 0);
-		int rx = 0;
-		int ry = 0;
+		for(int i = 0;i < 8;i++)
+		{
+			set_mask(&mesh_ctx->mask_ctx,i,1);
+		}
+		struct vector3 ptBegin;
+		ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
+		ptBegin.z = (double)(vtBegin->z-yoffset)/scale;
+		struct vector3 ptOver;
+		ptOver.x = (double)(vtOver->x-xoffset)/scale;
+		ptOver.z = (double)(vtOver->z-yoffset)/scale;
 
-		CPen pen(PS_SOLID, 1, RGB(255, 100, 100));
-		CClientDC dc(this);
-		CPen *pOldPen = dc.SelectObject(&pen);
-
-		POINT from;
-		from.x = _beginOffset.x + _tile *_overRect->_xIndex + _tile / 2;
-		from.y = _beginOffset.y + _tile * _overRect->_yIndex + _tile / 2;
-
-		dc.MoveTo(from);
-
-		DumpArgs* args = new DumpArgs();
-		args->self = this;
-		args->cdc = &dc;
-
-		finder_find(finder, 0, _beginRect->_xIndex, _beginRect->_yIndex, _overRect->_xIndex, _overRect->_yIndex, 0, pathCallback, args, pathDump, args);
-
-		delete args;
-
-		dc.SelectObject(pOldPen);
-
-		finder_release(finder);*/
+		polyPath = astar_find(mesh_ctx,&ptBegin,&ptOver,resultPath,&sizePath);
+		for(int i = 0;i < 8;i++)
+		{
+			set_mask(&mesh_ctx->mask_ctx,i,0);
+		}
+		set_mask(&mesh_ctx->mask_ctx,0,1);
 	}
-
+	Invalidate();
 }
 
 

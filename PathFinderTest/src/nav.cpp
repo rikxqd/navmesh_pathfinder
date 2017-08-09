@@ -5,7 +5,24 @@
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 
+void set_mask(struct MeshMask* ctx,int mask,int enable)
+{
+	if (mask >= ctx->size)
+	{
+		int nsize = ctx->size * 2;
+		int* mask_ptr = ctx->mask;
+		ctx->mask = (int*)malloc(sizeof(int) * nsize);
+		memcpy(ctx->mask, mask_ptr, sizeof(int) * ctx->size);
+		ctx->size = nsize;
+		free(mask_ptr);
+	}
+	ctx->mask[mask] = enable;
+}
 
+int get_mask(struct MeshMask* ctx,int mask)
+{
+	return ctx->mask[mask];
+}
 
 double cross(struct vector3* vt1,struct vector3* vt2)
 {
@@ -213,8 +230,11 @@ struct list* get_link(struct MeshContext* mesh_ctx, struct NavNode* node)
 			assert(tmp != NULL);
 			if (tmp->list_head.pre || tmp->list_head.next)
 				continue;
-			LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
-			tmp->reserve = border->opposite;
+			if (get_mask(&mesh_ctx->mask_ctx,tmp->mask))
+			{
+				LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
+				tmp->reserve = border->opposite;
+			}
 		}
 	}
 
@@ -305,6 +325,11 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	mesh_ctx->node = (struct NavNode *)malloc(sizeof(struct NavNode) * mesh_ctx->size);
 	memset(mesh_ctx->node,0,sizeof(struct NavNode) * mesh_ctx->size);
 
+	mesh_ctx->mask_ctx.mask = (int*)malloc(sizeof(int) * 8);
+	mesh_ctx->mask_ctx.size = 8;
+	for(int i = 0;i < 8;i++)
+		set_mask(&mesh_ctx->mask_ctx,i,0);
+	set_mask(&mesh_ctx->mask_ctx,0,1);
 	//º”‘ÿ∂•µ„
 	int i,j,k;
 	for (i = 0;i < v_cnt;i++)
@@ -335,11 +360,11 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		for (j = 1;j <= node->size;j++)
 		{
 			node->poly[j-1] = p[i][j];
-			center.x += mesh_ctx->vertices[p[i][j]].x;
-			center.y += mesh_ctx->vertices[p[i][j]].y;
-			center.z += mesh_ctx->vertices[p[i][j]].z;
+			center.x += mesh_ctx->vertices[node->poly[j-1]].x;
+			center.y += mesh_ctx->vertices[node->poly[j-1]].y;
+			center.z += mesh_ctx->vertices[node->poly[j-1]].z;
 		}
-
+		node->mask = p[i][node->size+1];
 		node->center.x = center.x / node->size;
 		node->center.y = center.y / node->size;
 		node->center.z = center.z / node->size;
@@ -563,7 +588,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 					left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 					if (left_node == NULL)
-						assert(0);
+					{
+						result[index].x = pt0->x;
+						result[index].z = pt0->z;
+						index++;
+						break;
+					}
 					
 					border = get_border_with_id(mesh_ctx,link_border);
 					pt_left.x = mesh_ctx->vertices[border->a].x;
@@ -594,7 +624,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 					right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 					if (right_node == NULL)
-						assert(0);
+					{
+						result[index].x = pt0->x;
+						result[index].z = pt0->z;
+						index++;
+						break;
+					}
 					
 					border = get_border_with_id(mesh_ctx,link_border);
 					pt_left.x = mesh_ctx->vertices[border->a].x;
@@ -654,7 +689,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 			left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 			if (left_node == NULL)
-				assert(0);
+			{
+				result[index].x = pt0->x;
+				result[index].z = pt0->z;
+				index++;
+				break;
+			}
 			
 			border = get_border_with_id(mesh_ctx,link_border);
 			vector3_copy(&pt_left,&mesh_ctx->vertices[border->a]);
@@ -680,7 +720,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 			right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 			if (right_node == NULL)
-				assert(0);
+			{
+				result[index].x = pt0->x;
+				result[index].z = pt0->z;
+				index++;
+				break;
+			}
 			
 			border = get_border_with_id(mesh_ctx,link_border);
 			vector3_copy(&pt_left,&mesh_ctx->vertices[border->a]);
