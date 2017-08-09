@@ -469,6 +469,11 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 				else
 				{
 					node = find_node(ctx,next);
+					if (get_mask(&ctx->mask_ctx,node->mask) == 0)
+					{
+						cross_pt(pt3,pt4,pt1,pt0,result);
+						return true;
+					}
 					break;
 				}
 			}
