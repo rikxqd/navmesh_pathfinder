@@ -153,10 +153,10 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	}
 	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
 	xoffset = 100;
-	yoffset = -350;
+	yoffset = -30;
 	polyBegin = -1;
 	polyOver = -1;
-	scale = 15;
+	scale = 8;
 	vtOver = vtBegin = NULL;
 
 	CString str;
@@ -511,7 +511,11 @@ void CPathFinderTestDlg::Straightline()
 	}
 	else
 	{
-
+		for(int i = 0;i < 8;i++)
+		{
+			set_mask(&mesh_ctx->mask_ctx,i,1);
+		}
+		set_mask(&mesh_ctx->mask_ctx,3,0);
 		vector3 vt0;
 		vt0.x = (double)(vtBegin->x-xoffset)/scale;
 		vt0.y = 0;
@@ -706,11 +710,43 @@ void CPathFinderTestDlg::OnIgnorePath()
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
 
-
+		struct vector3 smooth[64];
+		int index = 0;
 		struct vector3* path;
 		int size;
 		astar_find(mesh_ctx,&ptBegin,&ptOver,path,&size);
-		DrawPath(path,size);
-		set_mask(&mesh_ctx->mask_ctx,3,0);
+		int i = 0;
+		while(i < size)
+		{
+			smooth[index].x = path[i].x;
+			smooth[index].z = path[i].z;
+			index++;
+			int j;
+			for(j = i + 2;j < size;j++)
+			{
+				struct vector3 result;
+				if (raycast(mesh_ctx,&path[i],&path[j],&result))
+				{
+					if ((result.x - path[j].x)*(result.x - path[j].x)+(result.z - path[j].z)*(result.z - path[j].z) != 0)
+					{
+						i = j-1;
+						break;
+					}
+				}
+				else
+				{
+					i = j-1;
+					break;
+				}
+			}
+			if (j == size)
+			{
+				smooth[index].x = path[size-1].x;
+				smooth[index].z = path[size-1].z;
+				index++;
+				break;
+			}
+		}
+		DrawPath(smooth,index);
 	}
 }
