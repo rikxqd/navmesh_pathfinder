@@ -130,6 +130,9 @@
     <ClInclude Include="src\nav.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\lua-nav.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PathFinderTest.cpp">
@@ -145,6 +148,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\nav.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lua-nav.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

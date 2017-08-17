@@ -92,12 +92,12 @@ bool in_poly(struct MeshContext* mesh_ctx,int* poly,int size,struct vector3* vt3
 
 bool in_node_ex(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
 {
-	struct NavNode* navNode = &mesh_ctx->node[polyId];
+	struct NavNode* NavNode = &mesh_ctx->node[polyId];
 	struct vector3 vt;
 	vt.x = x;
 	vt.y = y;
 	vt.z = z;
-	return in_poly(mesh_ctx,navNode->poly,navNode->size,&vt);
+	return in_poly(mesh_ctx,NavNode->poly,NavNode->size,&vt);
 }
 
 bool in_node(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
@@ -109,11 +109,11 @@ bool in_node(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
 	vt.y = y;
 	vt.z = z;
 
-	struct NavNode* navNode = &mesh_ctx->node[polyId];
-	for (int i = 0; i < navNode->size; i++)
+	struct NavNode* NavNode = &mesh_ctx->node[polyId];
+	for (int i = 0; i < NavNode->size; i++)
 	{
-		struct vector3* vt1 = &mesh_ctx->vertices[navNode->poly[i]];
-		struct vector3* vt2 = &mesh_ctx->vertices[navNode->poly[(i+1)%navNode->size]];
+		struct vector3* vt1 = &mesh_ctx->vertices[NavNode->poly[i]];
+		struct vector3* vt2 = &mesh_ctx->vertices[NavNode->poly[(i+1)%NavNode->size]];
 		
 		if (vt1->z == vt2->z)
 			continue;
@@ -307,6 +307,11 @@ void vertex_sort(struct MeshContext* ctx, NavNode* node)
 	free(vertex);
 }
 
+void gen_tile(struct MeshContext* ctx)
+{
+
+}
+
 struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 {
 	struct MeshContext* mesh_ctx = (struct MeshContext*)malloc(sizeof(*mesh_ctx));
@@ -413,9 +418,15 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		}
 	}
 
+	gen_tile(mesh_ctx);
+
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));
 	LIST_INIT((&mesh_ctx->linked));
+
+	mesh_ctx->result.size = 8;
+	mesh_ctx->result.offset = 0;
+	mesh_ctx->result.wp = (struct vector3*)malloc(sizeof(struct vector3)*8);
 	return mesh_ctx;
 }
 
@@ -533,17 +544,33 @@ struct NavNode* next_border(struct MeshContext* ctx, NavNode* node,struct vector
 	return NULL;
 }
 
-struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct NavNode * node,int* size)
+void result_init(struct MeshContext* mesh_ctx)
 {
-	struct vector3* result = (struct vector3*)malloc(sizeof(struct vector3) * 100);
-	int index = 0;
+	mesh_ctx->result.offset = 0;
+}
 
+void result_add(struct MeshContext* mesh_ctx,struct vector3* wp)
+{
+	if (mesh_ctx->result.offset >= mesh_ctx->result.size)
+	{
+		int nsize = mesh_ctx->result.size * 2;
+		struct vector3* owp = mesh_ctx->result.wp;
+		mesh_ctx->result.wp = (struct vector3*)malloc(sizeof(struct vector3)*nsize);
+		memcpy(mesh_ctx->result.wp,owp,mesh_ctx->result.size * sizeof(struct vector3));
+		mesh_ctx->result.size = nsize;
+		free(owp);
+	}
+
+	mesh_ctx->result.wp[mesh_ctx->result.offset].x = wp->x;
+	mesh_ctx->result.wp[mesh_ctx->result.offset].z = wp->z;
+	mesh_ctx->result.offset++;
+}
+
+void make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct NavNode * node)
+{
+	result_add(mesh_ctx,pt1);
 
 	struct vector3* pt_wp = pt1;
-
-	result[index].x = pt_wp->x;
-	result[index].z = pt_wp->z;
-	index++;
 
 	int link_border = node->link_border;
 
@@ -575,9 +602,7 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 			if (forward_a < 0 && forward_b > 0)
 			{
-				result[index].x = pt0->x;
-				result[index].z = pt0->z;
-				index++;
+				result_add(mesh_ctx,pt0);
 				break;
 			}
 			else
@@ -587,16 +612,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 					pt_wp->x = pt_left.x;
 					pt_wp->z = pt_left.z;
 
-					result[index].x = pt_wp->x;
-					result[index].z = pt_wp->z;
-					index++;
+					result_add(mesh_ctx,pt_wp);
 
 					left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 					if (left_node == NULL)
 					{
-						result[index].x = pt0->x;
-						result[index].z = pt0->z;
-						index++;
+						result_add(mesh_ctx,pt0);
 						break;
 					}
 					
@@ -623,16 +644,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 					pt_wp->x = pt_right.x;
 					pt_wp->z = pt_right.z;
 
-					result[index].x = pt_wp->x;
-					result[index].z = pt_wp->z;
-					index++;
+					result_add(mesh_ctx,pt_wp);
 
 					right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 					if (right_node == NULL)
 					{
-						result[index].x = pt0->x;
-						result[index].z = pt0->z;
-						index++;
+						result_add(mesh_ctx,pt0);
 						break;
 					}
 					
@@ -695,9 +712,7 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 			left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 			if (left_node == NULL)
 			{
-				result[index].x = pt0->x;
-				result[index].z = pt0->z;
-				index++;
+				result_add(mesh_ctx,pt0);
 				break;
 			}
 			
@@ -708,9 +723,7 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 			vector3_sub(&mesh_ctx->vertices[border->a],pt_wp,&vt_left);
 			vector3_sub(&mesh_ctx->vertices[border->b],pt_wp,&vt_right);
 
-			result[index].x = pt_wp->x;
-			result[index].z = pt_wp->z;
-			index++;
+			result_add(mesh_ctx,pt_wp);
 
 			tmp = left_node->link_parent;
 			left_node = tmp;
@@ -726,9 +739,7 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 			right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 			if (right_node == NULL)
 			{
-				result[index].x = pt0->x;
-				result[index].z = pt0->z;
-				index++;
+				result_add(mesh_ctx,pt0);
 				break;
 			}
 			
@@ -739,9 +750,7 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 			vector3_sub(&mesh_ctx->vertices[border->a],pt_wp,&vt_left);
 			vector3_sub(&mesh_ctx->vertices[border->b],pt_wp,&vt_right);
 
-			result[index].x = pt_wp->x;
-			result[index].z = pt_wp->z;
-			index++;
+			result_add(mesh_ctx,pt_wp);
 
 			tmp = right_node->link_parent;
 			left_node = tmp;
@@ -751,12 +760,12 @@ struct vector3* make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,s
 
 		tmp = tmp->link_parent;
 	}
-	*size = index;
-	return result;
 }
 
-struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct vector3*&result,int * size)
+struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1)
 {
+	result_init(mesh_ctx);
+
 	struct NavNode* from = find_node_with_pos(mesh_ctx,pt0->x,pt0->y,pt0->z);
 	struct NavNode* to = find_node_with_pos(mesh_ctx,pt1->x,pt1->y,pt1->z);
 
@@ -777,10 +786,10 @@ struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,stru
 		current = (struct NavNode*)((int8_t*)elt - sizeof(struct list_node));
 		if (current == to)
 		{
-			result = make_waypoint(mesh_ctx,pt0,pt1,current,size);
+			make_waypoint(mesh_ctx,pt0,pt1,current);
 			RESET((mesh_ctx));
 			CLEAR_NODE(current);
-			return NULL;
+			return &mesh_ctx->result;
 		}
 
 		LIST_PUSH((&mesh_ctx->closelist),((struct list_node*)current));

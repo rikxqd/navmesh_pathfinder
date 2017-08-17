@@ -22,6 +22,13 @@ struct vector3
 	double z;
 };
 
+struct PathContext
+{
+	struct vector3* wp;
+	int offset;
+	int size;
+};
+
 struct MeshMask
 {
 	int *mask;
@@ -69,21 +76,42 @@ struct BorderContext
 	int border_offset;
 };
 
+struct Tile
+{
+	int mask;
+	int* node;
+	int offset;
+	int size;
+};
+
 struct MeshContext
 {
+	//顶点
 	struct vector3 * vertices;
 	int len;
 
+	//所有边(同一条边有ab和ba两条)
 	struct BorderContext border_ctx;
 
+	//多边形节点
 	struct NavNode* node;
 	int size;
 
+	//格子信息
+	struct Tile* tile;
+	int count;
+
+	//寻路结果缓存
+	struct PathContext result;
+
+	//获取相邻多边形缓存
+	struct list linked;
+
+	//多边形节点的mask
 	struct MeshMask mask_ctx;
 
 	struct minheap* openlist;
 	struct list closelist;
-	struct list linked;
 };
 
 struct VertexInfo
@@ -95,10 +123,11 @@ struct VertexInfo
 
 
 
+
 struct NavNode* find_node(struct MeshContext* ctx,int id);
 struct NavNode* find_node_with_pos(struct MeshContext* mesh_ctx,double x,double y,double z);
 struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
-struct NavNode* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct vector3*&result,int * size);
+struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
 bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
 void set_mask(struct MeshMask* ctx,int mask,int enable);
 #endif

@@ -43,7 +43,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\work\navmesh_pathfinder_demo\PathFinderTest\src;$(IncludePath)</IncludePath>
+    <IncludePath>..\lua\src;D:\work\navmesh_pathfinder_demo\PathFinderTest\src;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\work\navmesh_pathfinder_demo\PathFinderTest;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -59,6 +60,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -136,6 +138,7 @@
     <ClInclude Include="rapidjson\writer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="src\list.h" />
+    <ClInclude Include="src\lua-nav.h" />
     <ClInclude Include="src\minheap.h" />
     <ClInclude Include="src\nav.h" />
     <ClInclude Include="stdafx.h" />
@@ -144,6 +147,9 @@
   <ItemGroup>
     <ClCompile Include="PathFinderTest.cpp" />
     <ClCompile Include="PathFinderTestDlg.cpp" />
+    <ClCompile Include="src\lua-nav.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\minheap.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>

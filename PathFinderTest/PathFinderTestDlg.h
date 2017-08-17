@@ -5,6 +5,13 @@
 #pragma once
 
 #include "nav.h"
+extern "C"
+{
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+};
+
 #include <vector>
 // CPathFinderTestDlg ¶Ô»°¿ò
 class CPathFinderTestDlg : public CDialogEx
@@ -60,6 +67,7 @@ public:
 	vector3* vtOver;
 	int sizePath;
 	struct vector3* resultPath;
+	struct lua_State* L;
 public:
 	afx_msg void SetBegin();
 	afx_msg void SetEnd();

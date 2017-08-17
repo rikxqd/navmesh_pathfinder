@@ -8,6 +8,7 @@
 #include "afxdialogex.h"
 #include "rapidjson/reader.h"
 #include "rapidjson/document.h"  
+#include "lua-nav.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -159,6 +160,42 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	scale = 8;
 	vtOver = vtBegin = NULL;
 
+	L = luaL_newstate();
+	luaL_requiref(L,"nav",luaopen_nav,0);
+	luaL_openlibs(L);
+
+	int r = luaL_loadfile(L,"test.lua");
+		if (r != LUA_OK) 
+		{
+			CString str(lua_tostring(L,-1));
+			MessageBox(str);
+		}
+		else
+		{
+			r = lua_pcall(L,0,0,0);
+			if (r != LUA_OK) 
+			{
+				CString str(lua_tostring(L,-1));
+				MessageBox(str);
+				
+			}
+			else
+			{
+				lua_getglobal(L,"create");
+				lua_pushlightuserdata(L,v_ptr);
+				lua_pushnumber(L,v.Size());
+				lua_pushlightuserdata(L,p_ptr);
+				lua_pushnumber(L,p.Size());
+				r = lua_pcall(L,4,0,0);
+				if (r != LUA_OK) 
+				{
+					CString str(lua_tostring(L,-1));
+				MessageBox(str);
+				}
+			}
+			
+		}
+
 	CString str;
 	str.Format(_T("%d"),xoffset);
 	((CEdit*)GetDlgItem(IDC_EDIT2))->SetWindowTextW(str);
@@ -239,6 +276,16 @@ void CPathFinderTestDlg::DrawPath(struct vector3* path,int size)
 	dc.SelectObject(open);
 }
 
+
+int lua_draw(lua_State* L)
+{
+	CPathFinderTestDlg* self = (CPathFinderTestDlg*)lua_touserdata(L,1);
+	struct PathContext* path = (PathContext*)lua_touserdata(L,2);
+
+	self->DrawPath(path->wp,path->offset);
+	return 0;
+}
+
 void CPathFinderTestDlg::OnPath()
 {
 	// TODO:  在此添加控件通知处理程序代码
@@ -268,10 +315,31 @@ void CPathFinderTestDlg::OnPath()
 		struct vector3 ptOver;
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
-		struct vector3* path;
-		int size;
-		astar_find(mesh_ctx,&ptBegin,&ptOver,path,&size);
-		DrawPath(path,size);
+		//struct PathContext* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		//DrawPath(path->wp,path->offset);
+
+		//ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
+		//ptBegin.z = (double)(vtBegin->z-yoffset)/scale;
+		//ptOver.x = (double)(vtOver->x-xoffset)/scale;
+		//ptOver.z = (double)(vtOver->z-yoffset)/scale;
+
+		lua_pushcfunction(L,lua_draw);
+		lua_setglobal(L,"draw");
+
+		lua_getglobal(L,"find");
+		lua_pushlightuserdata(L,this);
+		lua_pushnumber(L,ptBegin.x);
+		lua_pushnumber(L,ptBegin.z);
+		lua_pushnumber(L,ptOver.x);
+		lua_pushnumber(L,ptOver.z);
+		int r = lua_pcall(L,5,0,0);
+		if (r != LUA_OK) 
+		{
+			CString str(lua_tostring(L,-1));
+			MessageBox(str);
+		}
+
+		
 	}
 }
 
@@ -712,22 +780,21 @@ void CPathFinderTestDlg::OnIgnorePath()
 
 		struct vector3 smooth[64];
 		int index = 0;
-		struct vector3* path;
-		int size;
-		astar_find(mesh_ctx,&ptBegin,&ptOver,path,&size);
+
+		struct PathContext* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
 		int i = 0;
-		while(i < size)
+		while(i < path->offset)
 		{
-			smooth[index].x = path[i].x;
-			smooth[index].z = path[i].z;
+			smooth[index].x = path->wp[i].x;
+			smooth[index].z = path->wp[i].z;
 			index++;
 			int j;
-			for(j = i + 2;j < size;j++)
+			for(j = i + 2;j < path->offset;j++)
 			{
 				struct vector3 result;
-				if (raycast(mesh_ctx,&path[i],&path[j],&result))
+				if (raycast(mesh_ctx,&path->wp[i],&path->wp[j],&result))
 				{
-					if ((result.x - path[j].x)*(result.x - path[j].x)+(result.z - path[j].z)*(result.z - path[j].z) != 0)
+					if ((result.x - path->wp[j].x)*(result.x - path->wp[j].x)+(result.z - path->wp[j].z)*(result.z - path->wp[j].z) != 0)
 					{
 						i = j-1;
 						break;
@@ -739,10 +806,10 @@ void CPathFinderTestDlg::OnIgnorePath()
 					break;
 				}
 			}
-			if (j == size)
+			if (j == path->offset)
 			{
-				smooth[index].x = path[size-1].x;
-				smooth[index].z = path[size-1].z;
+				smooth[index].x = path->wp[path->offset-1].x;
+				smooth[index].z = path->wp[path->offset-1].z;
 				index++;
 				break;
 			}
