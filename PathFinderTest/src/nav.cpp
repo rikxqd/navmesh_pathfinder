@@ -56,6 +56,29 @@ double vector3_angle(struct vector3* start,struct vector3* over)
 	return acos(tmp);
 }
 
+bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d)
+{
+	//快速排斥实验,矩形相交
+	if (max(a->x,b->x) >= min(c->x,d->x) &&
+		max(a->z,b->z) >= min(c->z,d->z) && 
+		max(c->x,d->x) >= min(a->x,b->x) && 
+		max(c->x,d->x) >= min(a->x,b->x))
+	{
+		struct vector3 ac,dc,bc,ca,ba;
+		vector3_sub(a,c,&ac);
+		vector3_sub(d,c,&dc);
+		vector3_sub(b,c,&bc);
+		vector3_sub(b,a,&ba);
+
+		if (cross(&ac,&dc) * cross(&dc,&bc) >= 0)
+		{
+			if (cross(&ca,&ba) * cross(&ba,&ca) >= 0)
+				return true;
+		}
+	}
+	
+	return false;
+}
 
 bool in_poly(struct MeshContext* mesh_ctx,int* poly,int size,struct vector3* vt3)
 {
@@ -307,12 +330,116 @@ void vertex_sort(struct MeshContext* ctx, NavNode* node)
 	free(vertex);
 }
 
-void gen_tile(struct MeshContext* ctx)
+void tile_add_node(struct Tile* tile,int index)
 {
-
+	if (tile->size == 0)
+	{
+		tile->size = 4;
+		tile->node = (int*)malloc(sizeof(int) * tile->size);
+	}
+	if (tile->offset >= tile->size)
+	{
+		int nsize = tile->size * 2;
+		int* onode = tile->node;
+		tile->node = (int*)malloc(sizeof(int) * nsize);
+		memcpy(tile->node,onode,sizeof(int)* tile->size);
+		tile->size = nsize;
+	}
+	tile->node[tile->offset] = index;
+	tile->offset++;
 }
 
-struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
+void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over)
+{
+	int width = over->x - start->x;
+	int heigh = over->z - start->z;
+ 
+	ctx->count = width * heigh;
+	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*ctx->count);
+	memset(ctx->tile,0,sizeof(struct Tile)*ctx->count);
+	for (int z = 0;z < heigh;z++)
+	{
+		for (int x = 0;x < width;x++)
+		{
+			int index = x + z * width;
+			struct Tile* tile = &ctx->tile[index];
+			tile->pos[0].x = start->x + x;
+			tile->pos[0].z = start->z + z;
+			tile->pos[1].x = start->x + x+1;
+			tile->pos[1].z = start->z + z;
+			tile->pos[2].x = start->x + x+1;
+			tile->pos[2].z = start->z + z+1;
+			tile->pos[3].x = start->x + x;
+			tile->pos[3].z = start->z + z+1;
+			tile->center.x = start->x + x + 0.5;
+			tile->center.z = start->z + z + 0.5;
+		}
+	}
+
+	for (int i = 0;i < ctx->count;i++)
+	{
+		struct Tile* tile = &ctx->tile[i];
+		
+		for (int j = 0;j < 4;j++)
+		{
+			for (int k = 0;k < ctx->size;k++)
+			{
+				struct NavNode* node = &ctx->node[k];
+				bool is_cross = false;
+				for (int l = 0;l < node->size;l++)
+				{
+					struct Border* border = get_border_with_id(ctx,node->border[l]);
+					if (intersect(&tile->pos[j],&tile->pos[(j+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->a]))
+					{
+						is_cross = true;
+						break;
+					}
+				}
+				if (is_cross)
+				{
+					for (int m = 0;m < 4;m++)
+					{
+						if (in_node_ex(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
+						{
+							tile_add_node(tile,k);
+							break;
+						}
+					}
+				}
+				else
+				{
+					if (in_node_ex(ctx,k,tile->center.x,tile->center.y,tile->center.z))
+					{
+						tile_add_node(tile,k);
+					}
+				}
+
+			}
+		}
+	}
+
+	for (int i = 0;i < ctx->count;i++)
+	{
+		struct Tile* tile = &ctx->tile[i];
+		if (tile->node == NULL)
+		{
+			tile->mask = -1;
+		}
+		else
+		{
+			int mask_max = 0;
+			for (int j = 0;j < tile->offset;j++)
+			{
+				struct NavNode* node = find_node(ctx,tile->node[j]);
+				if (node->mask > mask_max)
+					mask_max = node->mask;
+			}
+			tile->mask = mask_max;
+		}
+	}
+}
+
+struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vector3* start,struct vector3* over)
 {
 	struct MeshContext* mesh_ctx = (struct MeshContext*)malloc(sizeof(*mesh_ctx));
 	memset(mesh_ctx,0,sizeof(*mesh_ctx));
@@ -418,7 +545,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		}
 	}
 
-	gen_tile(mesh_ctx);
+	gen_tile(mesh_ctx,start,over);
 
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));

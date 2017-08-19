@@ -152,7 +152,12 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 			p_ptr[i][j] = tmp[j].GetInt();
 		}
 	}
-	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
+	struct vector3 start,over;
+	start.x = 16;
+	start.z = 7;
+	over.x = 44;
+	over.z = 85;
+	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size(),&start,&over);
 	xoffset = 100;
 	yoffset = -30;
 	polyBegin = -1;
@@ -404,8 +409,39 @@ void CPathFinderTestDlg::DrawMap()
 		dc.SelectObject(obrush);
 	}
 
-	
+	obrush = dc.SelectObject(&brush);
+	CBrush brush_empty0(RGB(255,255,0));
+	CBrush brush_empty1(RGB(255,0,0));
+	CBrush brush_empty2(RGB(88,88,0));
+	for (int i = 0;i < mesh_ctx->count;i++)
+	{
+		struct Tile* tile = & mesh_ctx->tile[i];
+		CPoint pt[4];
 
+		if (tile->mask == -1 )
+		{
+			dc.SelectObject(&brush_empty0);
+		}
+		else if (tile->mask == 0 )
+		{
+			dc.SelectObject(&brush_empty1);
+		}
+		else
+		{
+			dc.SelectObject(&brush_empty2);
+		}
+
+		for (int j = 0; j < 4;j++)
+		{
+			struct vector3* pos = &tile->pos[j];
+
+			pt[j].x = pos->x*scale+xoffset+300;
+			pt[j].y = pos->z*scale+yoffset;
+		}
+		dc.Polygon(pt,4);
+	}
+	dc.SelectObject(obrush);
+	
 	if (polyBegin != -1)
 	{
 		CBrush brush(RGB(0,255,0));
