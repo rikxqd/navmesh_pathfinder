@@ -128,7 +128,7 @@ struct VertexInfo
 
 struct NavNode* find_node(struct MeshContext* ctx,int id);
 struct NavNode* find_node_with_pos(struct MeshContext* mesh_ctx,double x,double y,double z);
-struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vector3* start,struct vector3* over);
+struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
 struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
 bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
 void set_mask(struct MeshMask* ctx,int mask,int enable);

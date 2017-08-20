@@ -16,13 +16,8 @@ int _create(struct lua_State* L)
 	int vsize = lua_tointeger(L,2);
 	int** pptr = (int**)lua_touserdata(L,3); 
 	int psize = lua_tointeger(L,4);
-	struct vector3 start,over;
-	start.x = lua_tonumber(L,5);
-	start.z = lua_tonumber(L,6);
-	over.x = lua_tonumber(L,7);
-	over.z = lua_tonumber(L,8);
 
-	struct MeshContext* ctx = load_mesh(vptr,vsize,pptr, psize,&start,&over);
+	struct MeshContext* ctx = load_mesh(vptr,vsize,pptr, psize);
 
 	lua_pushlightuserdata(L,ctx);
 	return 1;

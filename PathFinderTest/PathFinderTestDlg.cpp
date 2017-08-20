@@ -157,7 +157,7 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	start.z = 7;
 	over.x = 44;
 	over.z = 85;
-	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size(),&start,&over);
+	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
 	xoffset = 100;
 	yoffset = -30;
 	polyBegin = -1;

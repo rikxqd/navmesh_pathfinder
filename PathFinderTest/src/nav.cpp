@@ -439,7 +439,7 @@ void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over
 	}
 }
 
-struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vector3* start,struct vector3* over)
+struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 {
 	struct MeshContext* mesh_ctx = (struct MeshContext*)malloc(sizeof(*mesh_ctx));
 	memset(mesh_ctx,0,sizeof(*mesh_ctx));
@@ -462,6 +462,10 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vect
 	for(int i = 0;i < 8;i++)
 		set_mask(&mesh_ctx->mask_ctx,i,0);
 	set_mask(&mesh_ctx->mask_ctx,0,1);
+
+	struct vector3 left_top,bottom_right;
+	left_top.x = left_top.y = left_top.z = 0;
+	bottom_right.x = bottom_right.y = bottom_right.z = 0;
 	//加载顶点
 	int i,j,k;
 	for (i = 0;i < v_cnt;i++)
@@ -469,6 +473,38 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vect
 		mesh_ctx->vertices[i].x = v[i][0];
 		mesh_ctx->vertices[i].y = v[i][1];
 		mesh_ctx->vertices[i].z = v[i][2];
+
+		if (left_top.x == 0)
+			left_top.x = mesh_ctx->vertices[i].x;
+		else
+		{
+			if (mesh_ctx->vertices[i].x < left_top.x)
+				left_top.x = mesh_ctx->vertices[i].x;
+		}
+
+		if (left_top.z == 0)
+			left_top.z = mesh_ctx->vertices[i].z;
+		else
+		{
+			if (mesh_ctx->vertices[i].z < left_top.z)
+				left_top.z = mesh_ctx->vertices[i].z;
+		}
+
+		if (bottom_right.x == 0)
+			bottom_right.x = mesh_ctx->vertices[i].x;
+		else
+		{
+			if (mesh_ctx->vertices[i].x > bottom_right.x)
+				bottom_right.x = mesh_ctx->vertices[i].x;
+		}
+
+		if (bottom_right.z == 0)
+			bottom_right.z = mesh_ctx->vertices[i].z;
+		else
+		{
+			if (mesh_ctx->vertices[i].z > bottom_right.z)
+				bottom_right.z = mesh_ctx->vertices[i].z;
+		}
 	}
 
 	//加载多边形索引
@@ -545,7 +581,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt,struct vect
 		}
 	}
 
-	gen_tile(mesh_ctx,start,over);
+	gen_tile(mesh_ctx,&left_top,&bottom_right);
 
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));
