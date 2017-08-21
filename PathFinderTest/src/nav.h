@@ -102,6 +102,8 @@ struct MeshContext
 	//格子信息
 	struct Tile* tile;
 	int count;
+	int width;
+	int heigh;
 
 	//寻路结果缓存
 	struct PathContext result;

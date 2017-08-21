@@ -482,6 +482,7 @@ void CPathFinderTestDlg::DrawMap()
 		CBrush brush(RGB(50,50,50));
 		dc.SelectObject(&brush);
 		dc.Ellipse(vtBegin->x-3,vtBegin->z-3,vtBegin->x+3,vtBegin->z+3); 
+		dc.Ellipse(vtBegin->x-3+300,vtBegin->z-3,vtBegin->x+3+300,vtBegin->z+3); 
 	}
 
 	if (vtOver != NULL)
@@ -830,7 +831,8 @@ void CPathFinderTestDlg::OnIgnorePath()
 				struct vector3 result;
 				if (raycast(mesh_ctx,&path->wp[i],&path->wp[j],&result))
 				{
-					if ((result.x - path->wp[j].x)*(result.x - path->wp[j].x)+(result.z - path->wp[j].z)*(result.z - path->wp[j].z) != 0)
+					double distance = (result.x - path->wp[j].x)*(result.x - path->wp[j].x)+(result.z - path->wp[j].z)*(result.z - path->wp[j].z) ;
+					if (distance!= 0)
 					{
 						i = j-1;
 						break;

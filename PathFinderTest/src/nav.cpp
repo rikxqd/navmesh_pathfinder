@@ -351,17 +351,17 @@ void tile_add_node(struct Tile* tile,int index)
 
 void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over)
 {
-	int width = over->x - start->x;
-	int heigh = over->z - start->z;
+	ctx->width = over->x - start->x;
+	ctx->heigh = over->z - start->z;
  
-	ctx->count = width * heigh;
+	ctx->count = ctx->width * ctx->heigh;
 	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*ctx->count);
 	memset(ctx->tile,0,sizeof(struct Tile)*ctx->count);
-	for (int z = 0;z < heigh;z++)
+	for (int z = 0;z < ctx->heigh;z++)
 	{
-		for (int x = 0;x < width;x++)
+		for (int x = 0;x < ctx->width;x++)
 		{
-			int index = x + z * width;
+			int index = x + z * ctx->width;
 			struct Tile* tile = &ctx->tile[index];
 			tile->pos[0].x = start->x + x;
 			tile->pos[0].z = start->z + z;
@@ -608,6 +608,7 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 			return true;
 		}
 
+		bool not_cross = true;
 		for (int i = 0;i < node->size;i++)
 		{
 			struct Border* border = get_border_with_id(ctx,node->border[i]);
@@ -624,6 +625,7 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 
 			if (direct_a < 0 && direct_b > 0)
 			{
+				not_cross = false;
 				int next = -1;
 				if (border->node[0] !=-1)
 				{
@@ -652,6 +654,8 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 				}
 			}
 		}
+		if (not_cross)
+			return false;
 	}
 	return false;
 }
