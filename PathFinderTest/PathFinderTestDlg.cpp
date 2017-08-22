@@ -483,6 +483,52 @@ void CPathFinderTestDlg::DrawMap()
 		dc.SelectObject(&brush);
 		dc.Ellipse(vtBegin->x-3,vtBegin->z-3,vtBegin->x+3,vtBegin->z+3); 
 		dc.Ellipse(vtBegin->x-3+300,vtBegin->z-3,vtBegin->x+3+300,vtBegin->z+3); 
+		int x = (vtBegin->x-xoffset)/scale - mesh_ctx->lt.x;
+		int z = (vtBegin->z-yoffset)/scale - mesh_ctx->lt.z;
+		int index = x + z * mesh_ctx->width;
+		struct Tile* tile = & mesh_ctx->tile[index];
+
+		//格子跨跃多少个多边形
+	/*	for (int i = 0;i < tile->offset;i++)
+		{
+			int node_id = tile->node[i];
+			CBrush brush(RGB(111,111,66));
+			dc.SelectObject(&brush);
+
+			struct NavNode* node = find_node(mesh_ctx,node_id);
+			CPoint* pt0 = new CPoint[node->size];
+			for (int j = 0; j < node->size;j++)
+			{
+				struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
+				pt0[j].x = pos->x*scale+xoffset;
+				pt0[j].y = pos->z*scale+yoffset;
+			}
+			dc.Polygon(pt0,node->size);
+			delete[] pt0;
+		}*/
+
+		
+		CPoint pt[4];
+		CBrush brush00(RGB(99,99,99));
+		dc.SelectObject(&brush00);
+
+		for (int j = 0; j < 4;j++)
+		{
+			struct vector3* pos = &tile->pos[j];
+
+			pt[j].x = pos->x*scale+xoffset;
+			pt[j].y = pos->z*scale+yoffset;
+		}
+		dc.Polygon(pt,4);
+
+		for (int j = 0; j < 4;j++)
+		{
+			struct vector3* pos = &tile->pos[j];
+
+			pt[j].x = pos->x*scale+xoffset +300;
+			pt[j].y = pos->z*scale+yoffset;
+		}
+		dc.Polygon(pt,4);
 	}
 
 	if (vtOver != NULL)

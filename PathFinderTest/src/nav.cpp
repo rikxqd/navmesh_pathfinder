@@ -64,15 +64,17 @@ bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vect
 		max(c->x,d->x) >= min(a->x,b->x) && 
 		max(c->x,d->x) >= min(a->x,b->x))
 	{
-		struct vector3 ac,dc,bc,ca,ba;
+		struct vector3 ac,dc,bc,ca,ba,da;
 		vector3_sub(a,c,&ac);
 		vector3_sub(d,c,&dc);
 		vector3_sub(b,c,&bc);
+		vector3_sub(c,a,&ca);
 		vector3_sub(b,a,&ba);
+		vector3_sub(d,a,&da);
 
 		if (cross(&ac,&dc) * cross(&dc,&bc) >= 0)
 		{
-			if (cross(&ca,&ba) * cross(&ba,&ca) >= 0)
+			if (cross(&ca,&ba) * cross(&ba,&da) >= 0)
 				return true;
 		}
 	}
@@ -165,12 +167,24 @@ struct NavNode* find_node(struct MeshContext* mesh_ctx,int id)
 	return &mesh_ctx->node[id];
 }
 
-struct NavNode* find_node_with_pos(struct MeshContext* mesh_ctx,double x,double y,double z)
+struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,double z)
 {
-	for (int i = 0; i < mesh_ctx->size;i++)
+	//遍历查找
+	//for (int i = 0; i < ctx->size;i++)
+	//{
+	//	if (in_node_ex(ctx,i,x,y,z))
+	//		return &ctx->node[i];
+	//}
+
+	//利用格子快速查找
+	int x_index = x - ctx->lt.x;
+	int z_index = z - ctx->lt.z;
+	int index = x_index + z_index * ctx->width;
+	struct Tile* tile = &ctx->tile[index];
+	for (int i = 0;i < tile->offset;i++)
 	{
-		if (in_node_ex(mesh_ctx,i,x,y,z))
-			return &mesh_ctx->node[i];
+		if (in_node_ex(ctx,tile->node[i],x,y,z))
+			return &ctx->node[tile->node[i]];
 	}
 	return NULL;
 }
@@ -349,10 +363,10 @@ void tile_add_node(struct Tile* tile,int index)
 	tile->offset++;
 }
 
-void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over)
+void gen_tile(struct MeshContext* ctx)
 {
-	ctx->width = over->x - start->x;
-	ctx->heigh = over->z - start->z;
+	ctx->width = ctx->br.x - ctx->lt.x;
+	ctx->heigh = ctx->br.z - ctx->lt.z;
  
 	ctx->count = ctx->width * ctx->heigh;
 	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*ctx->count);
@@ -363,16 +377,16 @@ void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over
 		{
 			int index = x + z * ctx->width;
 			struct Tile* tile = &ctx->tile[index];
-			tile->pos[0].x = start->x + x;
-			tile->pos[0].z = start->z + z;
-			tile->pos[1].x = start->x + x+1;
-			tile->pos[1].z = start->z + z;
-			tile->pos[2].x = start->x + x+1;
-			tile->pos[2].z = start->z + z+1;
-			tile->pos[3].x = start->x + x;
-			tile->pos[3].z = start->z + z+1;
-			tile->center.x = start->x + x + 0.5;
-			tile->center.z = start->z + z + 0.5;
+			tile->pos[0].x = ctx->lt.x + x;
+			tile->pos[0].z = ctx->lt.z + z;
+			tile->pos[1].x = ctx->lt.x + x+1;
+			tile->pos[1].z = ctx->lt.z + z;
+			tile->pos[2].x = ctx->lt.x + x+1;
+			tile->pos[2].z = ctx->lt.z + z+1;
+			tile->pos[3].x = ctx->lt.x + x;
+			tile->pos[3].z = ctx->lt.z + z+1;
+			tile->center.x = ctx->lt.x + x + 0.5;
+			tile->center.z = ctx->lt.z + z + 0.5;
 		}
 	}
 
@@ -386,32 +400,35 @@ void gen_tile(struct MeshContext* ctx,struct vector3* start,struct vector3* over
 			{
 				struct NavNode* node = &ctx->node[k];
 				bool is_cross = false;
+				int cross_cnt = 0;
 				for (int l = 0;l < node->size;l++)
 				{
 					struct Border* border = get_border_with_id(ctx,node->border[l]);
-					if (intersect(&tile->pos[j],&tile->pos[(j+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->a]))
+					if (intersect(&tile->pos[j],&tile->pos[(j+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
 					{
 						is_cross = true;
-						break;
+						cross_cnt++;
 					}
 				}
 				if (is_cross)
 				{
+					bool has_add = false;
 					for (int m = 0;m < 4;m++)
 					{
 						if (in_node_ex(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
 						{
 							tile_add_node(tile,k);
+							has_add = true;
 							break;
 						}
 					}
+					if (has_add == false && cross_cnt >= 2)
+						tile_add_node(tile,k);
 				}
 				else
 				{
 					if (in_node_ex(ctx,k,tile->center.x,tile->center.y,tile->center.z))
-					{
 						tile_add_node(tile,k);
-					}
 				}
 
 			}
@@ -463,9 +480,8 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		set_mask(&mesh_ctx->mask_ctx,i,0);
 	set_mask(&mesh_ctx->mask_ctx,0,1);
 
-	struct vector3 left_top,bottom_right;
-	left_top.x = left_top.y = left_top.z = 0;
-	bottom_right.x = bottom_right.y = bottom_right.z = 0;
+	mesh_ctx->lt.x = mesh_ctx->lt.y = mesh_ctx->lt.z = 0;
+	mesh_ctx->br.x = mesh_ctx->br.y = mesh_ctx->br.z = 0;
 	//加载顶点
 	int i,j,k;
 	for (i = 0;i < v_cnt;i++)
@@ -474,36 +490,36 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		mesh_ctx->vertices[i].y = v[i][1];
 		mesh_ctx->vertices[i].z = v[i][2];
 
-		if (left_top.x == 0)
-			left_top.x = mesh_ctx->vertices[i].x;
+		if (mesh_ctx->lt.x == 0)
+			mesh_ctx->lt.x = mesh_ctx->vertices[i].x;
 		else
 		{
-			if (mesh_ctx->vertices[i].x < left_top.x)
-				left_top.x = mesh_ctx->vertices[i].x;
+			if (mesh_ctx->vertices[i].x < mesh_ctx->lt.x)
+				mesh_ctx->lt.x = mesh_ctx->vertices[i].x;
 		}
 
-		if (left_top.z == 0)
-			left_top.z = mesh_ctx->vertices[i].z;
+		if (mesh_ctx->lt.z == 0)
+			mesh_ctx->lt.z = mesh_ctx->vertices[i].z;
 		else
 		{
-			if (mesh_ctx->vertices[i].z < left_top.z)
-				left_top.z = mesh_ctx->vertices[i].z;
+			if (mesh_ctx->vertices[i].z < mesh_ctx->lt.z)
+				mesh_ctx->lt.z = mesh_ctx->vertices[i].z;
 		}
 
-		if (bottom_right.x == 0)
-			bottom_right.x = mesh_ctx->vertices[i].x;
+		if (mesh_ctx->br.x == 0)
+			mesh_ctx->br.x = mesh_ctx->vertices[i].x;
 		else
 		{
-			if (mesh_ctx->vertices[i].x > bottom_right.x)
-				bottom_right.x = mesh_ctx->vertices[i].x;
+			if (mesh_ctx->vertices[i].x > mesh_ctx->br.x)
+				mesh_ctx->br.x = mesh_ctx->vertices[i].x;
 		}
 
-		if (bottom_right.z == 0)
-			bottom_right.z = mesh_ctx->vertices[i].z;
+		if (mesh_ctx->br.z == 0)
+			mesh_ctx->br.z = mesh_ctx->vertices[i].z;
 		else
 		{
-			if (mesh_ctx->vertices[i].z > bottom_right.z)
-				bottom_right.z = mesh_ctx->vertices[i].z;
+			if (mesh_ctx->vertices[i].z > mesh_ctx->br.z)
+				mesh_ctx->br.z = mesh_ctx->vertices[i].z;
 		}
 	}
 
@@ -581,7 +597,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		}
 	}
 
-	gen_tile(mesh_ctx,&left_top,&bottom_right);
+	gen_tile(mesh_ctx);
 
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));
