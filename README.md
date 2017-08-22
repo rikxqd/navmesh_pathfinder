@@ -18,5 +18,5 @@
 ![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/4.png)
 
 生成九宫格，方更快速查找多边形和快速判断是否可走
-![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/5.png)
+![image](https://github.com/2109/navmesh_pathfinder/blob/master/image/7.png)
 
