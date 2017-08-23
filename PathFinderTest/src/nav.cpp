@@ -363,7 +363,8 @@ void tile_add_node(struct Tile* tile,int index)
 	tile->offset++;
 }
 
-void gen_tile(struct MeshContext* ctx)
+//切分格子信息
+void make_tile(struct MeshContext* ctx)
 {
 	ctx->width = ctx->br.x - ctx->lt.x;
 	ctx->heigh = ctx->br.z - ctx->lt.z;
@@ -371,6 +372,7 @@ void gen_tile(struct MeshContext* ctx)
 	int count = ctx->width * ctx->heigh;
 	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*count);
 	memset(ctx->tile,0,sizeof(struct Tile)*count);
+
 	for (int z = 0;z < ctx->heigh;z++)
 	{
 		for (int x = 0;x < ctx->width;x++)
@@ -399,31 +401,28 @@ void gen_tile(struct MeshContext* ctx)
 			for (int k = 0;k < ctx->size;k++)
 			{
 				struct NavNode* node = &ctx->node[k];
-				bool is_cross = false;
 				int cross_cnt = 0;
 				for (int l = 0;l < node->size;l++)
 				{
 					struct Border* border = get_border_with_id(ctx,node->border[l]);
 					if (intersect(&tile->pos[j],&tile->pos[(j+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
-					{
-						is_cross = true;
 						cross_cnt++;
-					}
 				}
-				if (is_cross)
+				if (cross_cnt > 0)
 				{
-					bool has_add = false;
-					for (int m = 0;m < 4;m++)
+					if (cross_cnt >= 2)
+						tile_add_node(tile,k);
+					else
 					{
-						if (in_node_ex(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
+						for (int m = 0;m < 4;m++)
 						{
-							tile_add_node(tile,k);
-							has_add = true;
-							break;
+							if (in_node_ex(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
+							{
+								tile_add_node(tile,k);
+								break;
+							}
 						}
 					}
-					if (has_add == false && cross_cnt >= 2)
-						tile_add_node(tile,k);
 				}
 				else
 				{
@@ -595,7 +594,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		}
 	}
 
-	gen_tile(mesh_ctx);
+	make_tile(mesh_ctx);
 
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));

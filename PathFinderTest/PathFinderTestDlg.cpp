@@ -489,7 +489,7 @@ void CPathFinderTestDlg::DrawMap()
 		struct Tile* tile = & mesh_ctx->tile[index];
 
 		//格子跨跃多少个多边形
-	/*	for (int i = 0;i < tile->offset;i++)
+		for (int i = 0;i < tile->offset;i++)
 		{
 			int node_id = tile->node[i];
 			CBrush brush(RGB(111,111,66));
@@ -505,7 +505,7 @@ void CPathFinderTestDlg::DrawMap()
 			}
 			dc.Polygon(pt0,node->size);
 			delete[] pt0;
-		}*/
+		}
 
 		
 		CPoint pt[4];
