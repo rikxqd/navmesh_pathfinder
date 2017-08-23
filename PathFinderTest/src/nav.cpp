@@ -62,7 +62,7 @@ bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vect
 	if (max(a->x,b->x) >= min(c->x,d->x) &&
 		max(a->z,b->z) >= min(c->z,d->z) && 
 		max(c->x,d->x) >= min(a->x,b->x) && 
-		max(c->x,d->x) >= min(a->x,b->x))
+		max(c->z,d->z) >= min(a->z,b->z))
 	{
 		struct vector3 ac,dc,bc,ca,ba,da;
 		vector3_sub(a,c,&ac);
@@ -361,41 +361,28 @@ void make_tile(struct MeshContext* ctx)
 	{
 		struct Tile* tile = &ctx->tile[i];
 		
-		for (int j = 0;j < 4;j++)
+		for (int j = 0;j < ctx->size;j++)
 		{
-			for (int k = 0;k < ctx->size;k++)
+			int cross_cnt  = 0;
+			struct NavNode* node = &ctx->node[j];
+			for (int k = 0;k < 4;k++)
 			{
-				struct NavNode* node = &ctx->node[k];
-				int cross_cnt = 0;
 				for (int l = 0;l < node->size;l++)
 				{
 					struct Border* border = get_border_with_id(ctx,node->border[l]);
-					if (intersect(&tile->pos[j],&tile->pos[(j+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
+					if (intersect(&tile->pos[k],&tile->pos[(k+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
 						cross_cnt++;
 				}
-				if (cross_cnt > 0)
-				{
-					if (cross_cnt >= 2)
-						tile_add_node(tile,k);
-					else
-					{
-						for (int m = 0;m < 4;m++)
-						{
-							if (in_node(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
-							{
-								tile_add_node(tile,k);
-								break;
-							}
-						}
-					}
-				}
-				else
-				{
-					if (in_node(ctx,k,tile->center.x,tile->center.y,tile->center.z))
-						tile_add_node(tile,k);
-				}
-
 			}
+			
+			if (cross_cnt > 0)
+				tile_add_node(tile,j);
+			else
+			{
+				if (in_node(ctx,j,tile->center.x,tile->center.y,tile->center.z))
+					tile_add_node(tile,j);
+			}
+
 		}
 	}
 
