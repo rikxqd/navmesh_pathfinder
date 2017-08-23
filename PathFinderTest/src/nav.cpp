@@ -5,7 +5,7 @@
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 
-void set_mask(struct MeshMask* ctx,int mask,int enable)
+void set_mask(struct nav_mesh_mask* ctx,int mask,int enable)
 {
 	if (mask >= ctx->size)
 	{
@@ -19,7 +19,7 @@ void set_mask(struct MeshMask* ctx,int mask,int enable)
 	ctx->mask[mask] = enable;
 }
 
-int get_mask(struct MeshMask* ctx,int mask)
+int get_mask(struct nav_mesh_mask* ctx,int mask)
 {
 	return ctx->mask[mask];
 }
@@ -29,7 +29,7 @@ double cross(struct vector3* vt1,struct vector3* vt2)
 	return vt1->z * vt2->x - vt1->x * vt2->z;
 }
 
-void cross_pt(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d,struct vector3* result)
+void cross_point(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d,struct vector3* result)
 {
 	result->x = ((b->x - a->x) * (c->x - d->x) * (c->z - a->z) - c->x * (b->x - a->x) * (c->z - d->z) + a->x * (b->z - a->z) * (c->x - d->x))/((b->z - a->z)*(c->x - d->x) - (b->x - a->x) * (c->z - d->z));
 	result->z = ((b->z - a->z) * (c->z - d->z) * (c->x - a->x) - c->z * (b->z - a->z) * (c->x - d->x) + a->z * (b->x - a->x) * (c->z - d->z))/((b->x - a->x)*(c->z - d->z) - (b->z - a->z) * (c->x - d->x));
@@ -47,13 +47,6 @@ void vector3_sub(struct vector3* a,struct vector3* b,struct vector3* result)
 	result->x = a->x - b->x;
 	result->y = a->y - b->y;
 	result->z = a->z - b->z;
-}
-
-double vector3_angle(struct vector3* start,struct vector3* over)
-{
-	double dot = start->x * over->x + start->z * over->z;
-	double tmp = dot/(sqrt(start->x*start->x+ start->z*start->z) * sqrt(over->x*over->x+ over->z*over->z));
-	return acos(tmp);
 }
 
 bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d)
@@ -82,7 +75,7 @@ bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vect
 	return false;
 }
 
-bool in_poly(struct MeshContext* mesh_ctx,int* poly,int size,struct vector3* vt3)
+bool in_poly(struct nav_mesh_context* mesh_ctx,int* poly,int size,struct vector3* vt3)
 {
 	int forward = 0;
 	for (int i = 0;i < size;i++)
@@ -115,24 +108,24 @@ bool in_poly(struct MeshContext* mesh_ctx,int* poly,int size,struct vector3* vt3
 	return true;
 }
 
-bool in_node(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
+bool in_node(struct nav_mesh_context* mesh_ctx,int polyId,double x,double y,double z)
 {
-	struct NavNode* NavNode = &mesh_ctx->node[polyId];
+	struct nav_node* nav_node = &mesh_ctx->node[polyId];
 	struct vector3 vt;
 	vt.x = x;
 	vt.y = y;
 	vt.z = z;
-	return in_poly(mesh_ctx,NavNode->poly,NavNode->size,&vt);
+	return in_poly(mesh_ctx,nav_node->poly,nav_node->size,&vt);
 }
 
-struct NavNode* find_node(struct MeshContext* mesh_ctx,int id)
+struct nav_node* get_node(struct nav_mesh_context* mesh_ctx,int id)
 {
 	if (id < 0 || id >= mesh_ctx->size)
 		return NULL;
 	return &mesh_ctx->node[id];
 }
 
-struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,double z)
+struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double y,double z)
 {
 	//遍历查找
 	//for (int i = 0; i < ctx->size;i++)
@@ -145,7 +138,7 @@ struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,dou
 	int x_index = x - ctx->lt.x;
 	int z_index = z - ctx->lt.z;
 	int index = x_index + z_index * ctx->width;
-	struct Tile* tile = &ctx->tile[index];
+	struct nav_tile* tile = &ctx->tile[index];
 	for (int i = 0;i < tile->offset;i++)
 	{
 		if (in_node(ctx,tile->node[i],x,y,z))
@@ -154,41 +147,41 @@ struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,dou
 	return NULL;
 }
 
-struct Border* get_border(struct MeshContext* mesh_ctx, int a, int b)
+struct nav_border* get_border(struct nav_mesh_context* mesh_ctx, int a, int b)
 {
-	struct BorderContext * border_ctx = &mesh_ctx->border_ctx;
+	struct nav_border_context * border_ctx = &mesh_ctx->border_ctx;
 	int i;
 	for (i = 0; i < border_ctx->border_offset; i++)
 	{
-		struct Border* border = &border_ctx->borders[i];
+		struct nav_border* border = &border_ctx->borders[i];
 		if (border->a == a && border->b == b)
 			return border;
 	}
 	return NULL;;
 }
 
-struct Border* get_border_with_id(struct MeshContext* mesh_ctx, int id)
+struct nav_border* get_border_with_id(struct nav_mesh_context* mesh_ctx, int id)
 {
-	struct BorderContext * border_ctx = &mesh_ctx->border_ctx;
+	struct nav_border_context * border_ctx = &mesh_ctx->border_ctx;
 	if (id < 0 || id > border_ctx->border_offset)
 		return NULL;
 	return &border_ctx->borders[id];
 }
 
-void add_border(struct MeshContext* mesh_ctx, int a, int b)
+void add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
 {
-	struct BorderContext * border_ctx = &mesh_ctx->border_ctx;
+	struct nav_border_context * border_ctx = &mesh_ctx->border_ctx;
 	if (border_ctx->border_offset + 1 >= border_ctx->border_cap)
 	{
 		int ncap = border_ctx->border_cap * 2;
-		struct Border* oborders = border_ctx->borders;
-		border_ctx->borders = (struct Border*)malloc(sizeof(struct Border) * ncap);
-		memcpy(border_ctx->borders, oborders, sizeof(struct Border) * border_ctx->border_cap);
+		struct nav_border* oborders = border_ctx->borders;
+		border_ctx->borders = (struct nav_border*)malloc(sizeof(struct nav_border) * ncap);
+		memcpy(border_ctx->borders, oborders, sizeof(struct nav_border) * border_ctx->border_cap);
 		border_ctx->border_cap = ncap;
 		free(oborders);
 	}
 
-	struct Border * border = &border_ctx->borders[border_ctx->border_offset];
+	struct nav_border * border = &border_ctx->borders[border_ctx->border_offset];
 	border->id = border_ctx->border_offset;
 	border->a = a;
 	border->b = b;
@@ -199,7 +192,7 @@ void add_border(struct MeshContext* mesh_ctx, int a, int b)
 	border_ctx->border_offset++;
 }
 
-void border_link_node(struct Border* border,int id)
+void border_link_node(struct nav_border* border,int id)
 {
 	if (border->node[0] == -1)
 		border->node[0] = id;
@@ -209,7 +202,7 @@ void border_link_node(struct Border* border,int id)
 		assert(0);
 }
 
-struct list* get_link(struct MeshContext* mesh_ctx, struct NavNode* node)
+struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 {
 	if (!LIST_EMPTY((&mesh_ctx->linked)))
 		LIST_POP(&mesh_ctx->linked);
@@ -217,7 +210,7 @@ struct list* get_link(struct MeshContext* mesh_ctx, struct NavNode* node)
 	for (i = 0; i < node->size;i++)
 	{
 		int border_index = node->border[i];
-		struct Border* border = get_border_with_id(mesh_ctx, border_index);
+		struct nav_border* border = get_border_with_id(mesh_ctx, border_index);
 		assert(border != NULL);
 
 		int linked = -1;
@@ -228,7 +221,7 @@ struct list* get_link(struct MeshContext* mesh_ctx, struct NavNode* node)
 
 		if (linked != -1)
 		{
-			struct NavNode* tmp = find_node(mesh_ctx,linked);
+			struct nav_node* tmp = get_node(mesh_ctx,linked);
 			assert(tmp != NULL);
 			if (tmp->list_head.pre || tmp->list_head.next)
 				continue;
@@ -246,7 +239,7 @@ struct list* get_link(struct MeshContext* mesh_ctx, struct NavNode* node)
 	return &mesh_ctx->linked;
 }
 
-double get_cost(struct NavNode* from,struct NavNode* to)
+double get_cost(struct nav_node* from,struct nav_node* to)
 {
 	double dx = from->center.x - to->center.x;
 	double dy = from->center.y - to->center.y;
@@ -256,8 +249,8 @@ double get_cost(struct NavNode* from,struct NavNode* to)
 
 int node_cmp(struct element * left, struct element * right) 
 {
-	struct NavNode *l = (struct NavNode*)((int8_t*)left - sizeof(struct list_node));
-	struct NavNode *r = (struct NavNode*)((int8_t*)right - sizeof(struct list_node));
+	struct nav_node *l = (struct nav_node*)((int8_t*)left - sizeof(struct list_node));
+	struct nav_node *r = (struct nav_node*)((int8_t*)right - sizeof(struct list_node));
 	return l->F < r->F;
 }
 
@@ -288,7 +281,7 @@ int vertex_cmp(const void * left,const void * right)
 	return (vt0.x* vt0.x +vt0.z * vt0.z) > (vt1.x* vt1.x +vt1.z * vt1.z);
 }
 
-void vertex_sort(struct MeshContext* ctx, NavNode* node)
+void vertex_sort(struct nav_mesh_context* ctx, nav_node* node)
 {
 	int j;
 	struct VertexInfo* vertex = (struct VertexInfo*)malloc(sizeof(*vertex) * node->size);
@@ -309,7 +302,7 @@ void vertex_sort(struct MeshContext* ctx, NavNode* node)
 	free(vertex);
 }
 
-void tile_add_node(struct Tile* tile,int index)
+void tile_add_node(struct nav_tile* tile,int index)
 {
 	if (tile->size == 0)
 	{
@@ -329,21 +322,21 @@ void tile_add_node(struct Tile* tile,int index)
 }
 
 //切分格子信息
-void make_tile(struct MeshContext* ctx)
+void make_tile(struct nav_mesh_context* ctx)
 {
 	ctx->width = ctx->br.x - ctx->lt.x;
 	ctx->heigh = ctx->br.z - ctx->lt.z;
  
 	int count = ctx->width * ctx->heigh;
-	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*count);
-	memset(ctx->tile,0,sizeof(struct Tile)*count);
+	ctx->tile = (struct nav_tile*)malloc(sizeof(struct nav_tile)*count);
+	memset(ctx->tile,0,sizeof(struct nav_tile)*count);
 
 	for (int z = 0;z < ctx->heigh;z++)
 	{
 		for (int x = 0;x < ctx->width;x++)
 		{
 			int index = x + z * ctx->width;
-			struct Tile* tile = &ctx->tile[index];
+			struct nav_tile* tile = &ctx->tile[index];
 			tile->pos[0].x = ctx->lt.x + x;
 			tile->pos[0].z = ctx->lt.z + z;
 			tile->pos[1].x = ctx->lt.x + x+1;
@@ -359,17 +352,17 @@ void make_tile(struct MeshContext* ctx)
 
 	for (int i = 0;i < count;i++)
 	{
-		struct Tile* tile = &ctx->tile[i];
+		struct nav_tile* tile = &ctx->tile[i];
 		
 		for (int j = 0;j < ctx->size;j++)
 		{
 			int cross_cnt  = 0;
-			struct NavNode* node = &ctx->node[j];
+			struct nav_node* node = &ctx->node[j];
 			for (int k = 0;k < 4;k++)
 			{
 				for (int l = 0;l < node->size;l++)
 				{
-					struct Border* border = get_border_with_id(ctx,node->border[l]);
+					struct nav_border* border = get_border_with_id(ctx,node->border[l]);
 					if (intersect(&tile->pos[k],&tile->pos[(k+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
 						cross_cnt++;
 				}
@@ -388,7 +381,7 @@ void make_tile(struct MeshContext* ctx)
 
 	for (int i = 0;i < count;i++)
 	{
-		struct Tile* tile = &ctx->tile[i];
+		struct nav_tile* tile = &ctx->tile[i];
 		if (tile->node == NULL)
 			tile->mask = -1;
 		else
@@ -396,7 +389,7 @@ void make_tile(struct MeshContext* ctx)
 			int mask_max = 0;
 			for (int j = 0;j < tile->offset;j++)
 			{
-				struct NavNode* node = find_node(ctx,tile->node[j]);
+				struct nav_node* node = get_node(ctx,tile->node[j]);
 				if (node->mask > mask_max)
 					mask_max = node->mask;
 			}
@@ -405,9 +398,9 @@ void make_tile(struct MeshContext* ctx)
 	}
 }
 
-struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
+struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 {
-	struct MeshContext* mesh_ctx = (struct MeshContext*)malloc(sizeof(*mesh_ctx));
+	struct nav_mesh_context* mesh_ctx = (struct nav_mesh_context*)malloc(sizeof(*mesh_ctx));
 	memset(mesh_ctx,0,sizeof(*mesh_ctx));
 
 	mesh_ctx->len = v_cnt;
@@ -416,12 +409,12 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 	mesh_ctx->border_ctx.border_cap = 16;
 	mesh_ctx->border_ctx.border_offset = 0;
-	mesh_ctx->border_ctx.borders = (struct Border *)malloc(sizeof(struct Border) * mesh_ctx->border_ctx.border_cap);
-	memset(mesh_ctx->border_ctx.borders,0,sizeof(struct Border) * mesh_ctx->border_ctx.border_cap);
+	mesh_ctx->border_ctx.borders = (struct nav_border *)malloc(sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
+	memset(mesh_ctx->border_ctx.borders,0,sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
 
 	mesh_ctx->size = p_cnt;
-	mesh_ctx->node = (struct NavNode *)malloc(sizeof(struct NavNode) * mesh_ctx->size);
-	memset(mesh_ctx->node,0,sizeof(struct NavNode) * mesh_ctx->size);
+	mesh_ctx->node = (struct nav_node *)malloc(sizeof(struct nav_node) * mesh_ctx->size);
+	memset(mesh_ctx->node,0,sizeof(struct nav_node) * mesh_ctx->size);
 
 	mesh_ctx->mask_ctx.mask = (int*)malloc(sizeof(int) * 8);
 	mesh_ctx->mask_ctx.size = 8;
@@ -475,7 +468,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	//加载多边形索引
 	for (i = 0;i < p_cnt;i++)
 	{
-		struct NavNode* node = &mesh_ctx->node[i];
+		struct nav_node* node = &mesh_ctx->node[i];
 		memset(node,0,sizeof(*node));
 		node->id = i;
 
@@ -514,7 +507,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 			int a = node->poly[k0];
 			int b = node->poly[k1];
 
-			struct Border* border0 = get_border(mesh_ctx, a, b);
+			struct nav_border* border0 = get_border(mesh_ctx, a, b);
 			if (border0 == NULL)
 			{
 				add_border(mesh_ctx, a, b);
@@ -524,7 +517,7 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 			node->border[k] = border0->id;
 			
-			struct Border* border1 = get_border(mesh_ctx, b, a);
+			struct nav_border* border1 = get_border(mesh_ctx, b, a);
 			if (border1 == NULL)
 			{
 				add_border(mesh_ctx, b, a);
@@ -537,10 +530,10 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	//记录每条边反方向顶点的边
 	for (int i = 0;i < mesh_ctx->border_ctx.border_offset;i++)
 	{
-		struct Border* border = get_border_with_id(mesh_ctx,i);
+		struct nav_border* border = get_border_with_id(mesh_ctx,i);
 		for (int j = 0;j < mesh_ctx->border_ctx.border_offset;j++)
 		{
-			struct Border* tmp = get_border(mesh_ctx,border->b,border->a);
+			struct nav_border* tmp = get_border(mesh_ctx,border->b,border->a);
 			if (tmp != NULL)
 				border->opposite = tmp->id;
 		}
@@ -558,9 +551,9 @@ struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	return mesh_ctx;
 }
 
-bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)
+bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)
 {
-	struct NavNode* node = find_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
+	struct nav_node* node = get_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
 
 	struct vector3 vt10;
 	vector3_sub(pt1,pt0,&vt10);
@@ -576,7 +569,7 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 		bool not_cross = true;
 		for (int i = 0;i < node->size;i++)
 		{
-			struct Border* border = get_border_with_id(ctx,node->border[i]);
+			struct nav_border* border = get_border_with_id(ctx,node->border[i]);
 
 			struct vector3* pt3 = &ctx->vertices[border->a];
 			struct vector3* pt4 = &ctx->vertices[border->b];
@@ -604,15 +597,15 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 				
 				if (next == -1)
 				{
-					cross_pt(pt3,pt4,pt1,pt0,result);
+					cross_point(pt3,pt4,pt1,pt0,result);
 					return true;
 				}
 				else
 				{
-					node = find_node(ctx,next);
+					node = get_node(ctx,next);
 					if (get_mask(&ctx->mask_ctx,node->mask) == 0)
 					{
-						cross_pt(pt3,pt4,pt1,pt0,result);
+						cross_point(pt3,pt4,pt1,pt0,result);
 						return true;
 					}
 					break;
@@ -637,14 +630,14 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 
 static inline void heap_clear(struct element* elt) 
 {
-	struct NavNode *n = (struct NavNode*)((int8_t*)elt - sizeof(struct list_node));
+	struct nav_node *n = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
 	CLEAR_NODE(n);
 }
 
 #define RESET(mesh_ctx) do \
 {\
-struct NavNode * n = NULL; \
-	while ((n = (struct NavNode*)LIST_POP(&mesh_ctx->closelist))) {\
+struct nav_node * n = NULL; \
+	while ((n = (struct nav_node*)LIST_POP(&mesh_ctx->closelist))) {\
 	\
 	CLEAR_NODE(n);\
 	}\
@@ -653,13 +646,13 @@ struct NavNode * n = NULL; \
 
 
 
-struct NavNode* next_border(struct MeshContext* ctx, NavNode* node,struct vector3* wp,int *link_border)
+struct nav_node* next_border(struct nav_mesh_context* ctx, nav_node* node,struct vector3* wp,int *link_border)
 {
 	struct vector3 vt0,vt1;
 	*link_border = node->link_border;
 	while (*link_border != -1)
 	{
-		struct Border* border = get_border_with_id(ctx,*link_border);
+		struct nav_border* border = get_border_with_id(ctx,*link_border);
 		vector3_sub(&ctx->vertices[border->a],wp,&vt0);
 		vector3_sub(&ctx->vertices[border->b],wp,&vt1);
 		if ((vt0.x == 0 && vt0.z == 0) || (vt1.x == 0 && vt1.z == 0))
@@ -676,12 +669,12 @@ struct NavNode* next_border(struct MeshContext* ctx, NavNode* node,struct vector
 	return NULL;
 }
 
-void result_init(struct MeshContext* mesh_ctx)
+void result_init(struct nav_mesh_context* mesh_ctx)
 {
 	mesh_ctx->result.offset = 0;
 }
 
-void result_add(struct MeshContext* mesh_ctx,struct vector3* wp)
+void result_add(struct nav_mesh_context* mesh_ctx,struct vector3* wp)
 {
 	if (mesh_ctx->result.offset >= mesh_ctx->result.size)
 	{
@@ -698,7 +691,7 @@ void result_add(struct MeshContext* mesh_ctx,struct vector3* wp)
 	mesh_ctx->result.offset++;
 }
 
-void make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct NavNode * node)
+void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct nav_node * node)
 {
 	result_add(mesh_ctx,pt1);
 
@@ -706,7 +699,7 @@ void make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vecto
 
 	int link_border = node->link_border;
 
-	struct Border* border = get_border_with_id(mesh_ctx,link_border);
+	struct nav_border* border = get_border_with_id(mesh_ctx,link_border);
 
 	struct vector3 pt_left,pt_right;
 	vector3_copy(&pt_left,&mesh_ctx->vertices[border->a]);
@@ -716,10 +709,10 @@ void make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vecto
 	vector3_sub(&pt_left,pt_wp,&vt_left);
 	vector3_sub(&pt_right,pt_wp,&vt_right);
 
-	struct NavNode* left_node = node->link_parent;
-	struct NavNode* right_node = node->link_parent;
+	struct nav_node* left_node = node->link_parent;
+	struct nav_node* right_node = node->link_parent;
 
-	struct NavNode* tmp = node->link_parent;
+	struct nav_node* tmp = node->link_parent;
 	while (tmp)
 	{
 		int link_border = tmp->link_border;
@@ -894,19 +887,19 @@ void make_waypoint(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vecto
 	}
 }
 
-struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1)
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1)
 {
 	result_init(mesh_ctx);
 
-	struct NavNode* from = find_node_with_pos(mesh_ctx,pt0->x,pt0->y,pt0->z);
-	struct NavNode* to = find_node_with_pos(mesh_ctx,pt1->x,pt1->y,pt1->z);
+	struct nav_node* from = get_node_with_pos(mesh_ctx,pt0->x,pt0->y,pt0->z);
+	struct nav_node* to = get_node_with_pos(mesh_ctx,pt1->x,pt1->y,pt1->z);
 
 	if (!from || !to || from == to)
 		return NULL;
 
 	minheap_push(mesh_ctx->openlist,&from->elt);
 
-	struct NavNode* current = NULL;
+	struct nav_node* current = NULL;
 	for (;;)
 	{
 		struct element* elt = minheap_pop(mesh_ctx->openlist);
@@ -915,7 +908,7 @@ struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,
 			RESET((mesh_ctx));
 			return NULL;
 		}
-		current = (struct NavNode*)((int8_t*)elt - sizeof(struct list_node));
+		current = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
 		if (current == to)
 		{
 			make_waypoint(mesh_ctx,pt0,pt1,current);
@@ -929,8 +922,8 @@ struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,
 		struct list* linked = get_link(mesh_ctx,current);
 		if (linked)
 		{
-			struct NavNode* linked_node;
-			while ((linked_node = (struct NavNode*)LIST_POP(linked)))
+			struct nav_node* linked_node;
+			while ((linked_node = (struct nav_node*)LIST_POP(linked)))
 			{
 				if (linked_node->elt.index)
 				{

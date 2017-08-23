@@ -22,20 +22,20 @@ struct vector3
 	double z;
 };
 
-struct PathContext
+struct nav_path_context
 {
 	struct vector3* wp;
 	int offset;
 	int size;
 };
 
-struct MeshMask
+struct nav_mesh_mask
 {
 	int *mask;
 	int size;
 };
 
-struct NavNode
+struct nav_node
 {
 	struct list_node list_head;
 	struct element elt;
@@ -54,13 +54,13 @@ struct NavNode
 	double H;
 	double F;
 
-	struct NavNode* link_parent;
+	struct nav_node* link_parent;
 	int link_border;
 
 	int reserve;
 };
 
-struct Border
+struct nav_border
 {
 	int id;
 	int node[2];
@@ -69,14 +69,14 @@ struct Border
 	int opposite;
 };
 
-struct BorderContext
+struct nav_border_context
 {
-	struct Border* borders;
+	struct nav_border* borders;
 	int border_cap;
 	int border_offset;
 };
 
-struct Tile
+struct nav_tile
 {
 	int mask;
 	int* node;
@@ -86,34 +86,34 @@ struct Tile
 	struct vector3 pos[4];
 };
 
-struct MeshContext
+struct nav_mesh_context
 {
 	//顶点
 	struct vector3 * vertices;
 	int len;
 
 	//所有边(同一条边有ab和ba两条)
-	struct BorderContext border_ctx;
+	struct nav_border_context border_ctx;
 
 	//多边形节点
-	struct NavNode* node;
+	struct nav_node* node;
 	int size;
 
 	//格子信息
-	struct Tile* tile;
+	struct nav_tile* tile;
 	struct vector3 lt;
 	struct vector3 br;
 	int width;
 	int heigh;
 
 	//寻路结果缓存
-	struct PathContext result;
+	struct nav_path_context result;
 
 	//获取相邻多边形缓存
 	struct list linked;
 
 	//多边形节点的mask
-	struct MeshMask mask_ctx;
+	struct nav_mesh_mask mask_ctx;
 
 	struct minheap* openlist;
 	struct list closelist;
@@ -121,7 +121,7 @@ struct MeshContext
 
 struct VertexInfo
 {
-	struct MeshContext* ctx;
+	struct nav_mesh_context* ctx;
 	int index;
 	struct vector3 center;
 };
@@ -129,10 +129,10 @@ struct VertexInfo
 
 
 
-struct NavNode* find_node(struct MeshContext* ctx,int id);
-struct NavNode* find_node_with_pos(struct MeshContext* mesh_ctx,double x,double y,double z);
-struct MeshContext* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
-struct PathContext* astar_find(struct MeshContext* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
-bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
-void set_mask(struct MeshMask* ctx,int mask,int enable);
+struct nav_node* get_node(struct nav_mesh_context* ctx,int id);
+struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
+struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
+bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
+void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
 #endif

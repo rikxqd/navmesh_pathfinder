@@ -17,7 +17,7 @@ int _create(struct lua_State* L)
 	int** pptr = (int**)lua_touserdata(L,3); 
 	int psize = lua_tointeger(L,4);
 
-	struct MeshContext* ctx = load_mesh(vptr,vsize,pptr, psize);
+	struct nav_mesh_context* ctx = load_mesh(vptr,vsize,pptr, psize);
 
 	lua_pushlightuserdata(L,ctx);
 	return 1;
@@ -30,7 +30,7 @@ int _release(struct lua_State* L)
 
 int _set_mask(struct lua_State* L)
 {
-	struct MeshContext* ctx = (struct MeshContext*)lua_touserdata(L,1);
+	struct nav_mesh_context* ctx = (struct nav_mesh_context*)lua_touserdata(L,1);
 	int mask = lua_tointeger(L,2);
 	int enable = lua_tointeger(L,3);
 	set_mask(&ctx->mask_ctx,mask,enable);
@@ -40,14 +40,14 @@ int _set_mask(struct lua_State* L)
 
 int _find_path(struct lua_State* L)
 {
-	struct MeshContext* ctx = (struct MeshContext*)lua_touserdata(L,1);
+	struct nav_mesh_context* ctx = (struct nav_mesh_context*)lua_touserdata(L,1);
 	struct vector3 start,over;
 	start.x = lua_tonumber(L,2);
 	start.z = lua_tonumber(L,3);
 	over.x = lua_tonumber(L,4);
 	over.z = lua_tonumber(L,5);
 
-	struct PathContext* path = astar_find(ctx,&start,&over);
+	struct nav_path_context* path = astar_find(ctx,&start,&over);
 
 	//lua_createtable(L,64,0);
 	//for(int i = 0; i < path->offset;i++)
@@ -66,7 +66,7 @@ int _find_path(struct lua_State* L)
 
 int _raycast(struct lua_State* L)
 {
-	struct MeshContext* ctx = (struct MeshContext*)lua_touserdata(L,1);
+	struct nav_mesh_context* ctx = (struct nav_mesh_context*)lua_touserdata(L,1);
 	struct vector3 start,over,result;
 	start.x = lua_tonumber(L,2);
 	start.z = lua_tonumber(L,3);

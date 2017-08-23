@@ -285,7 +285,7 @@ void CPathFinderTestDlg::DrawPath(struct vector3* path,int size)
 int lua_draw(lua_State* L)
 {
 	CPathFinderTestDlg* self = (CPathFinderTestDlg*)lua_touserdata(L,1);
-	struct PathContext* path = (PathContext*)lua_touserdata(L,2);
+	struct nav_path_context* path = (nav_path_context*)lua_touserdata(L,2);
 
 	self->DrawPath(path->wp,path->offset);
 	return 0;
@@ -320,7 +320,7 @@ void CPathFinderTestDlg::OnPath()
 		struct vector3 ptOver;
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
-		//struct PathContext* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		//struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
 		//DrawPath(path->wp,path->offset);
 
 		//ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
@@ -386,7 +386,7 @@ void CPathFinderTestDlg::DrawMap()
 	CBrush brushDoor(RGB(88,88,0));
 	for (int i = 0;i < mesh_ctx->size;i++)
 	{
-		struct NavNode* node = find_node(mesh_ctx,i);
+		struct nav_node* node = get_node(mesh_ctx,i);
 		CPoint* pt = new CPoint[node->size];
 
 		if (node->mask == 0 )
@@ -415,7 +415,7 @@ void CPathFinderTestDlg::DrawMap()
 	CBrush brush_empty2(RGB(88,88,0));
 	for (int i = 0;i < mesh_ctx->width* mesh_ctx->heigh;i++)
 	{
-		struct Tile* tile = & mesh_ctx->tile[i];
+		struct nav_tile* tile = & mesh_ctx->tile[i];
 		CPoint pt[4];
 
 		if (tile->mask == -1 )
@@ -447,7 +447,7 @@ void CPathFinderTestDlg::DrawMap()
 		CBrush brush(RGB(0,255,0));
 		dc.SelectObject(&brush);
 
-		struct NavNode* node = find_node(mesh_ctx,polyBegin);
+		struct nav_node* node = get_node(mesh_ctx,polyBegin);
 		CPoint* pt = new CPoint[node->size];
 		for (int j = 0; j < node->size;j++)
 		{
@@ -464,7 +464,7 @@ void CPathFinderTestDlg::DrawMap()
 		CBrush brush(RGB(0,0,255));
 		dc.SelectObject(&brush);
 
-		struct NavNode* node = find_node(mesh_ctx,polyOver);
+		struct nav_node* node = get_node(mesh_ctx,polyOver);
 		CPoint* pt = new CPoint[node->size];
 		for (int j = 0; j < node->size;j++)
 		{
@@ -486,7 +486,7 @@ void CPathFinderTestDlg::DrawMap()
 		int x = (vtBegin->x-xoffset)/scale - mesh_ctx->lt.x;
 		int z = (vtBegin->z-yoffset)/scale - mesh_ctx->lt.z;
 		int index = x + z * mesh_ctx->width;
-		struct Tile* tile = & mesh_ctx->tile[index];
+		struct nav_tile* tile = & mesh_ctx->tile[index];
 
 		//格子跨跃多少个多边形
 		for (int i = 0;i < tile->offset;i++)
@@ -495,7 +495,7 @@ void CPathFinderTestDlg::DrawMap()
 			CBrush brush(RGB(111,111,66));
 			dc.SelectObject(&brush);
 
-			struct NavNode* node = find_node(mesh_ctx,node_id);
+			struct nav_node* node = get_node(mesh_ctx,node_id);
 			CPoint* pt0 = new CPoint[node->size];
 			for (int j = 0; j < node->size;j++)
 			{
@@ -545,7 +545,7 @@ void CPathFinderTestDlg::DrawMap()
 
 void CPathFinderTestDlg::DrawBegin(CPoint& pos)
 {
-	struct NavNode* node = find_node_with_pos(mesh_ctx,(double)(pos.x-xoffset)/scale,0,(double)(pos.y-yoffset)/scale);
+	struct nav_node* node = get_node_with_pos(mesh_ctx,(double)(pos.x-xoffset)/scale,0,(double)(pos.y-yoffset)/scale);
 
 	if (node == NULL)
 		return;
@@ -590,7 +590,7 @@ void CPathFinderTestDlg::DrawBegin(CPoint& pos)
 void CPathFinderTestDlg::DrawOver(CPoint& pos)
 {
 	
-	struct NavNode* node = find_node_with_pos(mesh_ctx,(double)(pos.x-xoffset)/scale,0,(double)(pos.y-yoffset)/scale);
+	struct nav_node* node = get_node_with_pos(mesh_ctx,(double)(pos.x-xoffset)/scale,0,(double)(pos.y-yoffset)/scale);
 	if (node == NULL)
 		return;
 
@@ -864,7 +864,7 @@ void CPathFinderTestDlg::OnIgnorePath()
 		struct vector3 smooth[64];
 		int index = 0;
 
-		struct PathContext* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
 		int i = 0;
 		while(i < path->offset)
 		{

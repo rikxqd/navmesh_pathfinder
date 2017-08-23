@@ -57,7 +57,7 @@ public:
 
 	CheckState _checkState;
 
-	struct MeshContext* mesh_ctx;
+	struct nav_mesh_context* mesh_ctx;
 	int xoffset;
 	int yoffset;
 	int scale;
