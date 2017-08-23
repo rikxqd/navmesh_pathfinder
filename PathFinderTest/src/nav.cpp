@@ -254,10 +254,11 @@ int node_cmp(struct element * left, struct element * right)
 	return l->F < r->F;
 }
 
+//顶点顺时针排序函数
 int vertex_cmp(const void * left,const void * right) 
 {
-	struct VertexInfo *l = (struct VertexInfo*)left;
-	struct VertexInfo *r = (struct VertexInfo*)right;
+	struct nav_vertex_info *l = (struct nav_vertex_info*)left;
+	struct nav_vertex_info *r = (struct nav_vertex_info*)right;
 	
 	struct vector3 pt0,pt1;
 	vector3_copy(&pt0,&l->ctx->vertices[l->index]);
@@ -281,23 +282,21 @@ int vertex_cmp(const void * left,const void * right)
 	return (vt0.x* vt0.x +vt0.z * vt0.z) > (vt1.x* vt1.x +vt1.z * vt1.z);
 }
 
+//每个多边形的顶点顺时针排序
 void vertex_sort(struct nav_mesh_context* ctx, nav_node* node)
 {
-	int j;
-	struct VertexInfo* vertex = (struct VertexInfo*)malloc(sizeof(*vertex) * node->size);
-	for (j = 0;j < node->size;j++)
+	struct nav_vertex_info* vertex = (struct nav_vertex_info*)malloc(sizeof(*vertex) * node->size);
+	for (int i = 0;i < node->size;i++)
 	{
-		vertex[j].ctx = ctx;
-		vertex[j].index = node->poly[j];
+		vertex[i].ctx = ctx;
+		vertex[i].index = node->poly[i];
+		vector3_copy(&vertex[i].center,&node->center);
 	}
 
-	for (j = 0; j < node->size;j++)
-		vector3_copy(&vertex[j].center,&node->center);
+	qsort(vertex,node->size,sizeof(struct nav_vertex_info),vertex_cmp);
 
-	qsort(vertex,node->size,sizeof(struct VertexInfo),vertex_cmp);
-
-	for (j = 0;j <= node->size;j++)
-		node->poly[j] = vertex[j].index;
+	for (int i = 0;i < node->size;i++)
+		node->poly[i] = vertex[i].index;
 
 	free(vertex);
 }
@@ -328,6 +327,7 @@ void make_tile(struct nav_mesh_context* ctx)
 	ctx->heigh = ctx->br.z - ctx->lt.z;
  
 	int count = ctx->width * ctx->heigh;
+
 	ctx->tile = (struct nav_tile*)malloc(sizeof(struct nav_tile)*count);
 	memset(ctx->tile,0,sizeof(struct nav_tile)*count);
 
@@ -416,9 +416,9 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	mesh_ctx->node = (struct nav_node *)malloc(sizeof(struct nav_node) * mesh_ctx->size);
 	memset(mesh_ctx->node,0,sizeof(struct nav_node) * mesh_ctx->size);
 
-	mesh_ctx->mask_ctx.mask = (int*)malloc(sizeof(int) * 8);
 	mesh_ctx->mask_ctx.size = 8;
-	for(int i = 0;i < 8;i++)
+	mesh_ctx->mask_ctx.mask = (int*)malloc(sizeof(int) * mesh_ctx->mask_ctx.size);
+	for(int i = 0;i < mesh_ctx->mask_ctx.size;i++)
 		set_mask(&mesh_ctx->mask_ctx,i,0);
 	set_mask(&mesh_ctx->mask_ctx,0,1);
 
@@ -541,14 +541,25 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 	make_tile(mesh_ctx);
 
+	mesh_ctx->result.size = 8;
+	mesh_ctx->result.offset = 0;
+	mesh_ctx->result.wp = (struct vector3*)malloc(sizeof(struct vector3)*mesh_ctx->result.size);
+
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
 	LIST_INIT((&mesh_ctx->closelist));
 	LIST_INIT((&mesh_ctx->linked));
 
-	mesh_ctx->result.size = 8;
-	mesh_ctx->result.offset = 0;
-	mesh_ctx->result.wp = (struct vector3*)malloc(sizeof(struct vector3)*8);
 	return mesh_ctx;
+}
+
+void release_mesh(struct nav_mesh_context* ctx)
+{
+	free(ctx->vertices);
+	free(ctx->border_ctx.borders);
+	free(ctx->node);
+	free(ctx->tile);
+	free(ctx->mask_ctx.mask);
+	minheap_delete(ctx->openlist);
 }
 
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)

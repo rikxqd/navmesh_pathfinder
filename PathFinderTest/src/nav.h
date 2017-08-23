@@ -106,20 +106,20 @@ struct nav_mesh_context
 	int width;
 	int heigh;
 
+	//多边形节点的mask
+	struct nav_mesh_mask mask_ctx;
+
 	//寻路结果缓存
 	struct nav_path_context result;
 
 	//获取相邻多边形缓存
 	struct list linked;
 
-	//多边形节点的mask
-	struct nav_mesh_mask mask_ctx;
-
 	struct minheap* openlist;
 	struct list closelist;
 };
 
-struct VertexInfo
+struct nav_vertex_info
 {
 	struct nav_mesh_context* ctx;
 	int index;
@@ -127,12 +127,16 @@ struct VertexInfo
 };
 
 
-
+struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
+void release_mesh(struct nav_mesh_context* ctx);
 
 struct nav_node* get_node(struct nav_mesh_context* ctx,int id);
 struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
-struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
+
 struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
+
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
+int get_mask(struct nav_mesh_mask* ctx,int mask);
+
 #endif
