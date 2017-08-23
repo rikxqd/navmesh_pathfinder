@@ -115,7 +115,7 @@ bool in_poly(struct MeshContext* mesh_ctx,int* poly,int size,struct vector3* vt3
 	return true;
 }
 
-bool in_node_ex(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
+bool in_node(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
 {
 	struct NavNode* NavNode = &mesh_ctx->node[polyId];
 	struct vector3 vt;
@@ -123,41 +123,6 @@ bool in_node_ex(struct MeshContext* mesh_ctx,int polyId,double x,double y,double
 	vt.y = y;
 	vt.z = z;
 	return in_poly(mesh_ctx,NavNode->poly,NavNode->size,&vt);
-}
-
-bool in_node(struct MeshContext* mesh_ctx,int polyId,double x,double y,double z)
-{
-	int cross_cnt = 0;
-	
-	struct vector3 vt;
-	vt.x = x;
-	vt.y = y;
-	vt.z = z;
-
-	struct NavNode* NavNode = &mesh_ctx->node[polyId];
-	for (int i = 0; i < NavNode->size; i++)
-	{
-		struct vector3* vt1 = &mesh_ctx->vertices[NavNode->poly[i]];
-		struct vector3* vt2 = &mesh_ctx->vertices[NavNode->poly[(i+1)%NavNode->size]];
-		
-		if (vt1->z == vt2->z)
-			continue;
-
-		if (vt.z < min(vt1->z,vt2->z))
-			continue;
-
-		if (vt.z >= max(vt1->z, vt2->z))
-			continue;
-
-		double x = (vt.z - vt1->z)*(vt2->x - vt1->x)/(vt2->z - vt1->z)+ vt1->x;
-		if (x > vt.x)
-			cross_cnt++;
-	}
-
-	if (cross_cnt%2 == 1)
-		return true;
-
-	return false;
 }
 
 struct NavNode* find_node(struct MeshContext* mesh_ctx,int id)
@@ -172,7 +137,7 @@ struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,dou
 	//±È¿˙≤È’“
 	//for (int i = 0; i < ctx->size;i++)
 	//{
-	//	if (in_node_ex(ctx,i,x,y,z))
+	//	if (in_node(ctx,i,x,y,z))
 	//		return &ctx->node[i];
 	//}
 
@@ -183,7 +148,7 @@ struct NavNode* find_node_with_pos(struct MeshContext* ctx,double x,double y,dou
 	struct Tile* tile = &ctx->tile[index];
 	for (int i = 0;i < tile->offset;i++)
 	{
-		if (in_node_ex(ctx,tile->node[i],x,y,z))
+		if (in_node(ctx,tile->node[i],x,y,z))
 			return &ctx->node[tile->node[i]];
 	}
 	return NULL;
@@ -416,7 +381,7 @@ void make_tile(struct MeshContext* ctx)
 					{
 						for (int m = 0;m < 4;m++)
 						{
-							if (in_node_ex(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
+							if (in_node(ctx,k,tile->pos[m].x,tile->pos[m].y,tile->pos[m].z))
 							{
 								tile_add_node(tile,k);
 								break;
@@ -426,7 +391,7 @@ void make_tile(struct MeshContext* ctx)
 				}
 				else
 				{
-					if (in_node_ex(ctx,k,tile->center.x,tile->center.y,tile->center.z))
+					if (in_node(ctx,k,tile->center.x,tile->center.y,tile->center.z))
 						tile_add_node(tile,k);
 				}
 
@@ -615,7 +580,7 @@ bool raycast(struct MeshContext* ctx,struct vector3* pt0,struct vector3* pt1,str
 
 	while (node)
 	{
-		if (in_node_ex(ctx,node->id,pt1->x,pt1->y,pt1->z))
+		if (in_node(ctx,node->id,pt1->x,pt1->y,pt1->z))
 		{
 			vector3_copy(result,pt1);
 			return true;
