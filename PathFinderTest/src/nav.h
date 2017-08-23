@@ -119,7 +119,7 @@ struct nav_mesh_context
 	struct list closelist;
 };
 
-struct nav_vertex_info
+struct vertex_sort_info
 {
 	struct nav_mesh_context* ctx;
 	int index;

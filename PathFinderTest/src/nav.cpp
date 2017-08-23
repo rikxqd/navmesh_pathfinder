@@ -257,8 +257,8 @@ int node_cmp(struct element * left, struct element * right)
 //顶点顺时针排序函数
 int vertex_cmp(const void * left,const void * right) 
 {
-	struct nav_vertex_info *l = (struct nav_vertex_info*)left;
-	struct nav_vertex_info *r = (struct nav_vertex_info*)right;
+	struct vertex_sort_info *l = (struct vertex_sort_info*)left;
+	struct vertex_sort_info *r = (struct vertex_sort_info*)right;
 	
 	struct vector3 pt0,pt1;
 	vector3_copy(&pt0,&l->ctx->vertices[l->index]);
@@ -285,7 +285,7 @@ int vertex_cmp(const void * left,const void * right)
 //每个多边形的顶点顺时针排序
 void vertex_sort(struct nav_mesh_context* ctx, nav_node* node)
 {
-	struct nav_vertex_info* vertex = (struct nav_vertex_info*)malloc(sizeof(*vertex) * node->size);
+	struct vertex_sort_info* vertex = (struct vertex_sort_info*)malloc(sizeof(*vertex) * node->size);
 	for (int i = 0;i < node->size;i++)
 	{
 		vertex[i].ctx = ctx;
@@ -293,7 +293,7 @@ void vertex_sort(struct nav_mesh_context* ctx, nav_node* node)
 		vector3_copy(&vertex[i].center,&node->center);
 	}
 
-	qsort(vertex,node->size,sizeof(struct nav_vertex_info),vertex_cmp);
+	qsort(vertex,node->size,sizeof(struct vertex_sort_info),vertex_cmp);
 
 	for (int i = 0;i < node->size;i++)
 		node->poly[i] = vertex[i].index;
