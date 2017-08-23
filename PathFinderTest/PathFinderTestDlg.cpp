@@ -413,7 +413,7 @@ void CPathFinderTestDlg::DrawMap()
 	CBrush brush_empty0(RGB(255,255,0));
 	CBrush brush_empty1(RGB(255,0,0));
 	CBrush brush_empty2(RGB(88,88,0));
-	for (int i = 0;i < mesh_ctx->count;i++)
+	for (int i = 0;i < mesh_ctx->width* mesh_ctx->heigh;i++)
 	{
 		struct Tile* tile = & mesh_ctx->tile[i];
 		CPoint pt[4];

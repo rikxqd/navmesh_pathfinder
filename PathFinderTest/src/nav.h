@@ -103,7 +103,6 @@ struct MeshContext
 	struct Tile* tile;
 	struct vector3 lt;
 	struct vector3 br;
-	int count;
 	int width;
 	int heigh;
 

@@ -368,9 +368,9 @@ void gen_tile(struct MeshContext* ctx)
 	ctx->width = ctx->br.x - ctx->lt.x;
 	ctx->heigh = ctx->br.z - ctx->lt.z;
  
-	ctx->count = ctx->width * ctx->heigh;
-	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*ctx->count);
-	memset(ctx->tile,0,sizeof(struct Tile)*ctx->count);
+	int count = ctx->width * ctx->heigh;
+	ctx->tile = (struct Tile*)malloc(sizeof(struct Tile)*count);
+	memset(ctx->tile,0,sizeof(struct Tile)*count);
 	for (int z = 0;z < ctx->heigh;z++)
 	{
 		for (int x = 0;x < ctx->width;x++)
@@ -390,7 +390,7 @@ void gen_tile(struct MeshContext* ctx)
 		}
 	}
 
-	for (int i = 0;i < ctx->count;i++)
+	for (int i = 0;i < count;i++)
 	{
 		struct Tile* tile = &ctx->tile[i];
 		
@@ -435,13 +435,11 @@ void gen_tile(struct MeshContext* ctx)
 		}
 	}
 
-	for (int i = 0;i < ctx->count;i++)
+	for (int i = 0;i < count;i++)
 	{
 		struct Tile* tile = &ctx->tile[i];
 		if (tile->node == NULL)
-		{
 			tile->mask = -1;
-		}
 		else
 		{
 			int mask_max = 0;
