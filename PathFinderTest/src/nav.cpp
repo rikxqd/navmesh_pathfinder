@@ -328,7 +328,7 @@ void tile_add_node(struct nav_tile* tile,int index)
 	tile->offset++;
 }
 
-//切分格子信息
+//切分格子信息,每个格子跨立了多少个多边形
 void make_tile(struct nav_mesh_context* ctx)
 {
 	ctx->width = ctx->br.x - ctx->lt.x;
