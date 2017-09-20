@@ -122,12 +122,12 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	assert(file != NULL);
 	fseek(file,0,SEEK_END);
 	int len = ftell(file);
-	char* json = (char*)malloc(len);
-	memset(json,0,len);
+	char* json = (char*)malloc(len+1);
+	memset(json,0,len+1);
 	rewind(file);
 	fread(json,1,len,file);
 	fclose(file);
-	assert(_config.ParseInsitu(json).HasParseError() == false);
+	_config.Parse(json);
 
 	const rapidjson::Value& v = _config["v"];
 	double** v_ptr = (double**)malloc(sizeof(*v_ptr) * v.Size());
@@ -169,37 +169,37 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	luaL_requiref(L,"nav",luaopen_nav,0);
 	luaL_openlibs(L);
 
-	int r = luaL_loadfile(L,"test.lua");
-		if (r != LUA_OK) 
-		{
-			CString str(lua_tostring(L,-1));
-			MessageBox(str);
-		}
-		else
-		{
-			r = lua_pcall(L,0,0,0);
-			if (r != LUA_OK) 
-			{
-				CString str(lua_tostring(L,-1));
-				MessageBox(str);
-				
-			}
-			else
-			{
-				lua_getglobal(L,"create");
-				lua_pushlightuserdata(L,v_ptr);
-				lua_pushnumber(L,v.Size());
-				lua_pushlightuserdata(L,p_ptr);
-				lua_pushnumber(L,p.Size());
-				r = lua_pcall(L,4,0,0);
-				if (r != LUA_OK) 
-				{
-					CString str(lua_tostring(L,-1));
-				MessageBox(str);
-				}
-			}
-			
-		}
+	//int r = luaL_loadfile(L,"test.lua");
+	//	if (r != LUA_OK) 
+	//	{
+	//		CString str(lua_tostring(L,-1));
+	//		MessageBox(str);
+	//	}
+	//	else
+	//	{
+	//		r = lua_pcall(L,0,0,0);
+	//		if (r != LUA_OK) 
+	//		{
+	//			CString str(lua_tostring(L,-1));
+	//			MessageBox(str);
+	//			
+	//		}
+	//		else
+	//		{
+	//			lua_getglobal(L,"create");
+	//			lua_pushlightuserdata(L,v_ptr);
+	//			lua_pushnumber(L,v.Size());
+	//			lua_pushlightuserdata(L,p_ptr);
+	//			lua_pushnumber(L,p.Size());
+	//			r = lua_pcall(L,4,0,0);
+	//			if (r != LUA_OK) 
+	//			{
+	//				CString str(lua_tostring(L,-1));
+	//			MessageBox(str);
+	//			}
+	//		}
+	//		
+	//	}
 
 	CString str;
 	str.Format(_T("%d"),xoffset);
@@ -320,29 +320,29 @@ void CPathFinderTestDlg::OnPath()
 		struct vector3 ptOver;
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
-		//struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
-		//DrawPath(path->wp,path->offset);
+		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		DrawPath(path->wp,path->offset);
 
-		//ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
-		//ptBegin.z = (double)(vtBegin->z-yoffset)/scale;
-		//ptOver.x = (double)(vtOver->x-xoffset)/scale;
-		//ptOver.z = (double)(vtOver->z-yoffset)/scale;
+		ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
+		ptBegin.z = (double)(vtBegin->z-yoffset)/scale;
+		ptOver.x = (double)(vtOver->x-xoffset)/scale;
+		ptOver.z = (double)(vtOver->z-yoffset)/scale;
 
-		lua_pushcfunction(L,lua_draw);
-		lua_setglobal(L,"draw");
+		//lua_pushcfunction(L,lua_draw);
+		//lua_setglobal(L,"draw");
 
-		lua_getglobal(L,"find");
-		lua_pushlightuserdata(L,this);
-		lua_pushnumber(L,ptBegin.x);
-		lua_pushnumber(L,ptBegin.z);
-		lua_pushnumber(L,ptOver.x);
-		lua_pushnumber(L,ptOver.z);
-		int r = lua_pcall(L,5,0,0);
-		if (r != LUA_OK) 
-		{
-			CString str(lua_tostring(L,-1));
-			MessageBox(str);
-		}
+		//lua_getglobal(L,"find");
+		//lua_pushlightuserdata(L,this);
+		//lua_pushnumber(L,ptBegin.x);
+		//lua_pushnumber(L,ptBegin.z);
+		//lua_pushnumber(L,ptOver.x);
+		//lua_pushnumber(L,ptOver.z);
+		//int r = lua_pcall(L,5,0,0);
+		//if (r != LUA_OK) 
+		//{
+		//	CString str(lua_tostring(L,-1));
+		//	MessageBox(str);
+		//}
 
 		
 	}
@@ -419,17 +419,9 @@ void CPathFinderTestDlg::DrawMap()
 		CPoint pt[4];
 
 		if (tile->mask == -1 )
-		{
 			dc.SelectObject(&brush_empty0);
-		}
-		else if (tile->mask == 0 )
-		{
-			dc.SelectObject(&brush_empty1);
-		}
 		else
-		{
-			dc.SelectObject(&brush_empty2);
-		}
+			dc.SelectObject(&brush_empty1);
 
 		for (int j = 0; j < 4;j++)
 		{
@@ -488,47 +480,47 @@ void CPathFinderTestDlg::DrawMap()
 		int index = x + z * mesh_ctx->width;
 		struct nav_tile* tile = & mesh_ctx->tile[index];
 
-		//格子跨跃多少个多边形
-		for (int i = 0;i < tile->offset;i++)
-		{
-			int node_id = tile->node[i];
-			CBrush brush(RGB(111,111,66));
-			dc.SelectObject(&brush);
+		////格子跨跃多少个多边形
+		//for (int i = 0;i < tile->offset;i++)
+		//{
+		//	int node_id = tile->node[i];
+		//	CBrush brush(RGB(111,111,66));
+		//	dc.SelectObject(&brush);
 
-			struct nav_node* node = get_node(mesh_ctx,node_id);
-			CPoint* pt0 = new CPoint[node->size];
-			for (int j = 0; j < node->size;j++)
-			{
-				struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
-				pt0[j].x = pos->x*scale+xoffset;
-				pt0[j].y = pos->z*scale+yoffset;
-			}
-			dc.Polygon(pt0,node->size);
-			delete[] pt0;
-		}
+		//	struct nav_node* node = get_node(mesh_ctx,node_id);
+		//	CPoint* pt0 = new CPoint[node->size];
+		//	for (int j = 0; j < node->size;j++)
+		//	{
+		//		struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
+		//		pt0[j].x = pos->x*scale+xoffset;
+		//		pt0[j].y = pos->z*scale+yoffset;
+		//	}
+		//	dc.Polygon(pt0,node->size);
+		//	delete[] pt0;
+		//}
 
-		
-		CPoint pt[4];
-		CBrush brush00(RGB(99,99,99));
-		dc.SelectObject(&brush00);
+		//
+		//CPoint pt[4];
+		//CBrush brush00(RGB(99,99,99));
+		//dc.SelectObject(&brush00);
 
-		for (int j = 0; j < 4;j++)
-		{
-			struct vector3* pos = &tile->pos[j];
+		//for (int j = 0; j < 4;j++)
+		//{
+		//	struct vector3* pos = &tile->pos[j];
 
-			pt[j].x = pos->x*scale+xoffset;
-			pt[j].y = pos->z*scale+yoffset;
-		}
-		dc.Polygon(pt,4);
+		//	pt[j].x = pos->x*scale+xoffset;
+		//	pt[j].y = pos->z*scale+yoffset;
+		//}
+		//dc.Polygon(pt,4);
 
-		for (int j = 0; j < 4;j++)
-		{
-			struct vector3* pos = &tile->pos[j];
+		//for (int j = 0; j < 4;j++)
+		//{
+		//	struct vector3* pos = &tile->pos[j];
 
-			pt[j].x = pos->x*scale+xoffset +300;
-			pt[j].y = pos->z*scale+yoffset;
-		}
-		dc.Polygon(pt,4);
+		//	pt[j].x = pos->x*scale+xoffset +300;
+		//	pt[j].y = pos->z*scale+yoffset;
+		//}
+		//dc.Polygon(pt,4);
 	}
 
 	if (vtOver != NULL)

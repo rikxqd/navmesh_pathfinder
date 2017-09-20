@@ -127,12 +127,15 @@ struct nav_node* get_node(struct nav_mesh_context* mesh_ctx,int id)
 
 struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double y,double z)
 {
+#ifndef USE_NAV_TILE
 	//遍历查找
-	//for (int i = 0; i < ctx->size;i++)
-	//{
-	//	if (in_node(ctx,i,x,y,z))
-	//		return &ctx->node[i];
-	//}
+	for (int i = 0; i < ctx->size;i++)
+	{
+		if (in_node(ctx,i,x,y,z))
+			return &ctx->node[i];
+	}
+
+#else
 
 	//利用格子快速查找
 	int x_index = x - ctx->lt.x;
@@ -145,6 +148,9 @@ struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double 
 			return &ctx->node[tile->node[i]];
 	}
 	return NULL;
+#endif
+
+
 }
 
 struct nav_border* get_border(struct nav_mesh_context* mesh_ctx, int a, int b)
@@ -168,7 +174,7 @@ struct nav_border* get_border_with_id(struct nav_mesh_context* mesh_ctx, int id)
 	return &border_ctx->borders[id];
 }
 
-void add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
+struct nav_border* add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
 {
 	struct nav_border_context * border_ctx = &mesh_ctx->border_ctx;
 	if (border_ctx->border_offset + 1 >= border_ctx->border_cap)
@@ -190,6 +196,8 @@ void add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
 	border->opposite = -1;
 
 	border_ctx->border_offset++;
+
+	return border;
 }
 
 void border_link_node(struct nav_border* border,int id)
@@ -385,16 +393,7 @@ void make_tile(struct nav_mesh_context* ctx)
 		if (tile->node == NULL)
 			tile->mask = -1;
 		else
-		{
-			int mask_max = 0;
-			for (int j = 0;j < tile->offset;j++)
-			{
-				struct nav_node* node = get_node(ctx,tile->node[j]);
-				if (node->mask > mask_max)
-					mask_max = node->mask;
-			}
-			tile->mask = mask_max;
-		}
+			tile->mask = 0;
 	}
 }
 
@@ -424,7 +423,7 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 	mesh_ctx->lt.x = mesh_ctx->lt.y = mesh_ctx->lt.z = 0;
 	mesh_ctx->br.x = mesh_ctx->br.y = mesh_ctx->br.z = 0;
-	//加载顶点
+	//加载顶点,找出地图的左上和右下的两个项点
 	int i,j,k;
 	for (i = 0;i < v_cnt;i++)
 	{
@@ -509,37 +508,26 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 			struct nav_border* border0 = get_border(mesh_ctx, a, b);
 			if (border0 == NULL)
-			{
-				add_border(mesh_ctx, a, b);
-				border0 = get_border(mesh_ctx, a, b);
-			}
+				border0 = add_border(mesh_ctx, a, b);
+
 			border_link_node(border0,node->id);
 
 			node->border[k] = border0->id;
 			
 			struct nav_border* border1 = get_border(mesh_ctx, b, a);
 			if (border1 == NULL)
-			{
-				add_border(mesh_ctx, b, a);
-				border1 = get_border(mesh_ctx, b, a);
-			}
+				border1 = add_border(mesh_ctx, b, a);
+
 			border_link_node(border1,node->id);
+
+			border0->opposite = border1->id;
+			border1->opposite = border0->id;
 		}
 	}
 
-	//记录每条边反方向顶点的边
-	for (int i = 0;i < mesh_ctx->border_ctx.border_offset;i++)
-	{
-		struct nav_border* border = get_border_with_id(mesh_ctx,i);
-		for (int j = 0;j < mesh_ctx->border_ctx.border_offset;j++)
-		{
-			struct nav_border* tmp = get_border(mesh_ctx,border->b,border->a);
-			if (tmp != NULL)
-				border->opposite = tmp->id;
-		}
-	}
-
+#ifdef USE_NAV_TILE
 	make_tile(mesh_ctx);
+#endif
 
 	mesh_ctx->result.size = 8;
 	mesh_ctx->result.offset = 0;

@@ -15,6 +15,8 @@
 #define NULL 0
 #endif
 
+#define USE_NAV_TILE
+
 struct vector3
 {
 	double x;
@@ -48,12 +50,14 @@ struct nav_node
 
 	int mask;
 
+	//多边形的中心点
 	struct vector3 center;
 
 	double G;
 	double H;
 	double F;
 
+	//缓存A*寻路出来的相邻多边形和与相邻多边形共边的边
 	struct nav_node* link_parent;
 	int link_border;
 
