@@ -591,6 +591,7 @@ void release_mesh(struct nav_mesh_context* ctx)
 	release_tile(ctx);
 #endif
 	free(ctx->mask_ctx.mask);
+	free(ctx->result.wp);
 	minheap_delete(ctx->openlist);
 	free(ctx);
 }
