@@ -544,16 +544,16 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 			int a = node->poly[k0];
 			int b = node->poly[k1];
 
-			struct nav_border* border0 = search_border(mesh_ctx, a, b);
-			border_link_node(border0,node->id);
+			struct nav_border* border = search_border(mesh_ctx, a, b);
+			border_link_node(border,node->id);
 
-			node->border[k] = border0->id;
+			node->border[k] = border->id;
 			
-			struct nav_border* border1 = search_border(mesh_ctx, b, a);
-			border_link_node(border1,node->id);
+			struct nav_border* border_opposite = search_border(mesh_ctx, b, a);
+			border_link_node(border_opposite,node->id);
 
-			border0->opposite = border1->id;
-			border1->opposite = border0->id;
+			border->opposite = border_opposite->id;
+			border_opposite->opposite = border->id;
 		}
 	}
 
@@ -578,6 +578,14 @@ void release_mesh(struct nav_mesh_context* ctx)
 {
 	free(ctx->vertices);
 	free(ctx->border_ctx.borders);
+
+	for(int i = 0;i < ctx->size;i++)
+	{
+		if (ctx->node[i].border != NULL)
+			free(ctx->node[i].border);
+		if (ctx->node[i].poly != NULL)
+			free(ctx->node[i].poly);
+	}
 	free(ctx->node);
 #ifdef USE_NAV_TILE
 	release_tile(ctx);
