@@ -270,11 +270,21 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 	return &mesh_ctx->linked;
 }
 
-double get_cost(struct nav_node* from,struct nav_node* to)
+double G_COST(struct nav_node* from,struct nav_node* to)
 {
 	double dx = from->center.x - to->center.x;
-	double dy = from->center.y - to->center.y;
+	//double dy = from->center.y - to->center.y;
+	double dy = 0;
 	double dz = from->center.z - to->center.z;
+	return sqrt(dx*dx + dy* dy + dz* dz) * 1000;
+}
+
+double H_COST(struct nav_node* from, struct vector3* to)
+{
+	double dx = from->center.x - to->x;
+	//double dy = from->center.y - to->y;
+	double dy = 0;
+	double dz = from->center.z - to->z;
 	return sqrt(dx*dx + dy* dy + dz* dz);
 }
 
@@ -973,7 +983,7 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vec
 			{
 				if (linked_node->elt.index)
 				{
-					double nG = current->G + get_cost(current,linked_node);
+					double nG = current->G + G_COST(current,linked_node);
 					if (nG < linked_node->G)
 					{
 						linked_node->G = nG;
@@ -985,8 +995,8 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vec
 				}
 				else
 				{
-					linked_node->G = current->G + get_cost(current,linked_node);
-					linked_node->H = get_cost(linked_node,to);
+					linked_node->G = current->G + G_COST(current, linked_node);
+					linked_node->H = H_COST(linked_node,pt1);
 					linked_node->F = linked_node->G + linked_node->H;
 					assert(linked_node->link_border == -1);
 					assert(linked_node->link_parent == NULL);
