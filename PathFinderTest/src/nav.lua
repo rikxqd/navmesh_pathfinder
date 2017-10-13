@@ -1,4 +1,4 @@
-local nav_c = require "nav"
+local nav_c = require "nav.core"
 
 local _M = {}
 

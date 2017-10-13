@@ -86,7 +86,7 @@ int _raycast(struct lua_State* L)
 	return 1;
 }
 
-int luaopen_nav(lua_State *L)
+int luaopen_nav_core(lua_State *L)
 {
 	luaL_Reg l[] = 
 	{

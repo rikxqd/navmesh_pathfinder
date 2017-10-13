@@ -73,6 +73,13 @@ struct nav_border
 	int opposite;
 };
 
+struct nav_border_search_node
+{
+	struct nav_border_search_node* next;
+	int id;
+	int index;
+};
+
 struct nav_border_context
 {
 	struct nav_border* borders;
@@ -98,7 +105,8 @@ struct nav_mesh_context
 
 	//所有边(同一条边有ab和ba两条)
 	struct nav_border_context border_ctx;
-
+	struct nav_border_search_node** border_searcher;
+	 
 	//多边形节点
 	struct nav_node* node;
 	int size;
