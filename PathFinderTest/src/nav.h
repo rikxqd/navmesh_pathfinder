@@ -76,8 +76,8 @@ struct nav_border
 struct nav_border_search_node
 {
 	struct nav_border_search_node* next;
-	int id;
 	int index;
+	int id;
 };
 
 struct nav_border_context

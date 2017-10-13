@@ -200,7 +200,8 @@ struct nav_border* search_border(struct nav_mesh_context* ctx,int begin,int end)
 
 	node =  (struct nav_border_search_node*)malloc(sizeof(*node));
 	struct nav_border* border = add_border(ctx,begin,end);
-	node->index = border->id;
+	node->id = border->id;
+	node->index = end;
 	node->next = ctx->border_searcher[begin];
 	ctx->border_searcher[begin] = node;
 	return border;
@@ -438,7 +439,7 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	mesh_ctx->vertices = (struct vector3 *)malloc(sizeof(struct vector3) * mesh_ctx->len);
 	memset(mesh_ctx->vertices,0,sizeof(struct vector3) * mesh_ctx->len);
 
-	mesh_ctx->border_ctx.border_cap = 16;
+	mesh_ctx->border_ctx.border_cap = 10000;
 	mesh_ctx->border_ctx.border_offset = 0;
 	mesh_ctx->border_ctx.borders = (struct nav_border *)malloc(sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
 	memset(mesh_ctx->border_ctx.borders,0,sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
@@ -550,7 +551,7 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 			node->border[k] = border->id;
 			
 			struct nav_border* border_opposite = search_border(mesh_ctx, b, a);
-			border_link_node(border_opposite,node->id);
+			border_link_node(border_opposite, node->id);
 
 			border->opposite = border_opposite->id;
 			border_opposite->opposite = border->id;
