@@ -198,7 +198,7 @@ struct nav_border* search_border(struct nav_mesh_context* ctx,int begin,int end)
 		node = node->next;
 	}
 
-	node =  malloc(sizeof(*node));
+	node =  (struct nav_border_search_node*)malloc(sizeof(*node));
 	struct nav_border* border = add_border(ctx,begin,end);
 	node->index = border->id;
 	node->next = ctx->border_searcher[begin];

@@ -166,7 +166,7 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	vtOver = vtBegin = NULL;
 
 	L = luaL_newstate();
-	luaL_requiref(L,"nav",luaopen_nav,0);
+	luaL_requiref(L, "nav", luaopen_nav_core, 0);
 	luaL_openlibs(L);
 
 	//int r = luaL_loadfile(L,"test.lua");

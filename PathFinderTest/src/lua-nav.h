@@ -6,6 +6,6 @@ extern "C"
 #include "lualib.h"
 #include "lauxlib.h"
 };
-int luaopen_nav(lua_State *L);
+int luaopen_nav_core(lua_State *L);
 
 #endif
