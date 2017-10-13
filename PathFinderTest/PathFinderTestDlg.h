@@ -26,11 +26,6 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
-	enum CheckState {
-		BEGIN,
-		OVER,
-	};
-
 // 实现
 protected:
 	HICON m_hIcon;
@@ -44,18 +39,14 @@ protected:
 public:
 	afx_msg void OnPath();
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
-	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 
 	void DrawMap();
 	void DrawBegin(CPoint& pos);
 	void DrawOver(CPoint& pos);
-	void ClearCheck();
 
 	void DrawPath(struct vector3* path,int size);
 
 public:
-
-	CheckState _checkState;
 
 	struct nav_mesh_context* mesh_ctx;
 	int xoffset;
@@ -69,8 +60,6 @@ public:
 	struct vector3* resultPath;
 	struct lua_State* L;
 public:
-	afx_msg void SetBegin();
-	afx_msg void SetEnd();
 	afx_msg void OnUpdateIddPathfindertestDialog(CCmdUI *pCmdUI);
 	afx_msg void Straightline();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -81,4 +70,5 @@ public:
 	afx_msg void OnEnChangeEdit3();
 	afx_msg void OnEnChangeEdit4();
 	afx_msg void OnIgnorePath();
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 };

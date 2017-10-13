@@ -179,6 +179,9 @@ struct nav_border* add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
 	border->node[0] = -1;
 	border->node[1] = -1;
 	border->opposite = -1;
+	border->center.x = (mesh_ctx->vertices[a].x + mesh_ctx->vertices[b].x);
+	border->center.y = (mesh_ctx->vertices[a].y + mesh_ctx->vertices[b].y);
+	border->center.z = (mesh_ctx->vertices[a].z + mesh_ctx->vertices[b].z);
 
 	border_ctx->border_offset++;
 
@@ -260,6 +263,7 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 			{
 				LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
 				tmp->reserve = border->opposite;
+				vector3_copy(&tmp->pos, &border->center);
 			}
 		}
 	}
@@ -272,11 +276,11 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 
 double G_COST(struct nav_node* from,struct nav_node* to)
 {
-	double dx = from->center.x - to->center.x;
+	double dx = from->pos.x - to->pos.x;
 	//double dy = from->center.y - to->center.y;
 	double dy = 0;
-	double dz = from->center.z - to->center.z;
-	return sqrt(dx*dx + dy* dy + dz* dz) * 1000;
+	double dz = from->pos.z - to->pos.z;
+	return sqrt(dx*dx + dy* dy + dz* dz);
 }
 
 double H_COST(struct nav_node* from, struct vector3* to)
@@ -396,19 +400,24 @@ void create_tile(struct nav_mesh_context* ctx)
 		
 		for (int j = 0;j < ctx->size;j++)
 		{
-			int cross_cnt  = 0;
+			bool done = false;
 			struct nav_node* node = &ctx->node[j];
 			for (int k = 0;k < 4;k++)
 			{
 				for (int l = 0;l < node->size;l++)
 				{
 					struct nav_border* border = get_border(ctx,node->border[l]);
-					if (intersect(&tile->pos[k],&tile->pos[(k+1)%4],&ctx->vertices[border->a],&ctx->vertices[border->b]))
-						cross_cnt++;
+					if (intersect(&tile->pos[k], &tile->pos[(k + 1) % 4], &ctx->vertices[border->a], &ctx->vertices[border->b]))
+					{
+						done = true;
+						break;
+					}
 				}
+				if (done)
+					break;
 			}
 			
-			if (cross_cnt > 0)
+			if (done)
 				tile_add_node(tile,j);
 			else
 			{
@@ -449,7 +458,7 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	mesh_ctx->vertices = (struct vector3 *)malloc(sizeof(struct vector3) * mesh_ctx->len);
 	memset(mesh_ctx->vertices,0,sizeof(struct vector3) * mesh_ctx->len);
 
-	mesh_ctx->border_ctx.border_cap = 10000;
+	mesh_ctx->border_ctx.border_cap = 64;
 	mesh_ctx->border_ctx.border_offset = 0;
 	mesh_ctx->border_ctx.borders = (struct nav_border *)malloc(sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
 	memset(mesh_ctx->border_ctx.borders,0,sizeof(struct nav_border) * mesh_ctx->border_ctx.border_cap);
@@ -557,14 +566,16 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 
 			struct nav_border* border = search_border(mesh_ctx, a, b);
 			border_link_node(border,node->id);
-
-			node->border[k] = border->id;
 			
+			int border_id = border->id;
+			node->border[k] = border_id;
+
 			struct nav_border* border_opposite = search_border(mesh_ctx, b, a);
 			border_link_node(border_opposite, node->id);
-
+			border_opposite->opposite = border_id;
+			
+			border = get_border(mesh_ctx,border_id);
 			border->opposite = border_opposite->id;
-			border_opposite->opposite = border->id;
 		}
 	}
 
@@ -953,6 +964,8 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vec
 	if (!from || !to || from == to)
 		return NULL;
 
+	vector3_copy(&from->pos, pt0);
+	
 	minheap_push(mesh_ctx->openlist,&from->elt);
 
 	struct nav_node* current = NULL;

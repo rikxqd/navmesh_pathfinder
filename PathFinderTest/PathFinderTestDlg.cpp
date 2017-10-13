@@ -53,7 +53,7 @@ CPathFinderTestDlg::CPathFinderTestDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CPathFinderTestDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	_checkState = BEGIN;
+
 }
 
 void CPathFinderTestDlg::DoDataExchange(CDataExchange* pDX)
@@ -67,18 +67,15 @@ BEGIN_MESSAGE_MAP(CPathFinderTestDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON1, &CPathFinderTestDlg::OnPath)
 	ON_WM_MOUSEACTIVATE()
-	ON_WM_LBUTTONDBLCLK()
-	ON_BN_CLICKED(IDC_CHECK1, &CPathFinderTestDlg::SetBegin)
-	ON_BN_CLICKED(IDC_CHECK2, &CPathFinderTestDlg::SetEnd)
 	ON_UPDATE_COMMAND_UI(IDD_PATHFINDERTEST_DIALOG, &CPathFinderTestDlg::OnUpdateIddPathfindertestDialog)
 	ON_BN_CLICKED(IDC_BUTTON2, &CPathFinderTestDlg::Straightline)
-	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_BN_CLICKED(IDC_BUTTON3, &CPathFinderTestDlg::OnIgnoreLine)
 	ON_EN_CHANGE(IDC_EDIT2, &CPathFinderTestDlg::OnEnChangeEdit2)
 	ON_EN_CHANGE(IDC_EDIT3, &CPathFinderTestDlg::OnEnChangeEdit3)
 	ON_EN_CHANGE(IDC_EDIT4, &CPathFinderTestDlg::OnEnChangeEdit4)
 	ON_BN_CLICKED(IDC_BUTTON4, &CPathFinderTestDlg::OnIgnorePath)
+	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
 
 
@@ -114,8 +111,6 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO:  在此添加额外的初始化代码
-
-	SetBegin();
 
 	rapidjson::Document _config;
 	FILE* file = fopen("mesh.json","r");
@@ -159,10 +154,10 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	over.z = 85;
 	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
 	xoffset = 100;
-	yoffset = -30;
+	yoffset = 50;
 	polyBegin = -1;
 	polyOver = -1;
-	scale = 8;
+	scale = 4;
 	vtOver = vtBegin = NULL;
 
 	L = luaL_newstate();
@@ -344,7 +339,7 @@ void CPathFinderTestDlg::OnPath()
 		//	MessageBox(str);
 		//}
 
-		
+		//release_mesh(mesh_ctx);
 	}
 }
 
@@ -356,23 +351,6 @@ int CPathFinderTestDlg::OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT m
 	return CDialogEx::OnMouseActivate(pDesktopWnd, nHitTest, message);
 }
 
-
-void CPathFinderTestDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	switch (_checkState)
-	{
-	case BEGIN:
-		this->DrawBegin(point);
-		break;
-	case OVER:
-		this->DrawOver(point);
-		break;
-	default:
-		break;
-	}
-	CDialogEx::OnLButtonDblClk(nFlags, point);
-}
 
 void CPathFinderTestDlg::DrawMap()
 {
@@ -413,25 +391,25 @@ void CPathFinderTestDlg::DrawMap()
 	CBrush brush_empty0(RGB(255,255,0));
 	CBrush brush_empty1(RGB(255,0,0));
 	CBrush brush_empty2(RGB(88,88,0));
-	for (int i = 0;i < mesh_ctx->width* mesh_ctx->heigh;i++)
-	{
-		struct nav_tile* tile = & mesh_ctx->tile[i];
-		CPoint pt[4];
+	//for (int i = 0;i < mesh_ctx->width* mesh_ctx->heigh;i++)
+	//{
+	//	struct nav_tile* tile = & mesh_ctx->tile[i];
+	//	CPoint pt[4];
 
-		if (tile->mask == -1 )
-			dc.SelectObject(&brush_empty0);
-		else
-			dc.SelectObject(&brush_empty1);
+	//	if (tile->mask == -1 )
+	//		dc.SelectObject(&brush_empty0);
+	//	else
+	//		dc.SelectObject(&brush_empty1);
 
-		for (int j = 0; j < 4;j++)
-		{
-			struct vector3* pos = &tile->pos[j];
+	//	for (int j = 0; j < 4;j++)
+	//	{
+	//		struct vector3* pos = &tile->pos[j];
 
-			pt[j].x = pos->x*scale+xoffset+300;
-			pt[j].y = pos->z*scale+yoffset;
-		}
-		dc.Polygon(pt,4);
-	}
+	//		pt[j].x = pos->x*scale+xoffset+300;
+	//		pt[j].y = pos->z*scale+yoffset;
+	//	}
+	//	dc.Polygon(pt,4);
+	//}
 	dc.SelectObject(obrush);
 	
 	if (polyBegin != -1)
@@ -600,35 +578,6 @@ void CPathFinderTestDlg::DrawOver(CPoint& pos)
 	Invalidate();
 }
 
-
-void CPathFinderTestDlg::ClearCheck()
-{
-	for (int i = IDC_CHECK1; i <= IDC_CHECK2; i++)
-	{
-		((CButton*)GetDlgItem(i))->SetCheck(false);
-	}
-
-}
-
-void CPathFinderTestDlg::SetBegin()
-{
-	// TODO:  在此添加控件通知处理程序代码
-	ClearCheck();
-	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(true);
-	_checkState = BEGIN;
-	Invalidate();
-}
-
-
-void CPathFinderTestDlg::SetEnd()
-{
-	// TODO:  在此添加控件通知处理程序代码
-	ClearCheck();
-	((CButton*)GetDlgItem(IDC_CHECK2))->SetCheck(true);
-	_checkState = OVER;
-}
-
-
 void CPathFinderTestDlg::OnUpdateIddPathfindertestDialog(CCmdUI *pCmdUI)
 {
 	// TODO:  在此添加命令更新用户界面处理程序代码
@@ -704,17 +653,9 @@ void CPathFinderTestDlg::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 
-	switch (_checkState)
-	{
-	case BEGIN:
-		this->DrawBegin(point);
-		break;
-	case OVER:
-		this->DrawOver(point);
-		break;
-	default:
-		break;
-	}
+
+	this->DrawBegin(point);
+
 	CDialogEx::OnLButtonUp(nFlags, point);
 }
 
@@ -892,4 +833,12 @@ void CPathFinderTestDlg::OnIgnorePath()
 		}
 		DrawPath(smooth,index);
 	}
+}
+
+
+void CPathFinderTestDlg::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	this->DrawOver(point);
+	CDialogEx::OnRButtonUp(nFlags, point);
 }

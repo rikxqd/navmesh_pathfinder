@@ -15,7 +15,7 @@
 #define NULL 0
 #endif
 
-#define USE_NAV_TILE
+//#define USE_NAV_TILE
 
 struct vector3
 {
@@ -62,6 +62,7 @@ struct nav_node
 	int link_border;
 
 	int reserve;
+	struct vector3 pos;;
 };
 
 struct nav_border
@@ -71,6 +72,7 @@ struct nav_border
 	int a;
 	int b;
 	int opposite;
+	struct vector3 center;
 };
 
 struct nav_border_search_node

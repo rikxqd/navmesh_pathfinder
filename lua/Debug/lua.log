@@ -1,8 +1,45 @@
-﻿生成启动时间为 2017/8/16 11:56:02。
-     1>项目“D:\work\navmesh_pathfinder_demo\lua\lua.vcxproj”在节点 2 上(Build 个目标)。
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.CppBuild.targets(346,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
-     1>Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\PathFinderTest\lua.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"..\PathFinderTest\lua.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\PathFinderTest\lua.lib" /MACHINE:X86 /DLL Debug\lapi.obj
+﻿生成启动时间为 2017/10/13 22:46:54。
+     1>项目“H:\navmesh_pathfinder\lua\lua.vcxproj”在节点 2 上(Build 个目标)。
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(357,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+     1>ClCompile:
+         F:\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _LIB /D LUA_BUILD_AS_DLL /D _CRT_SECURE_NO_WARNINGS /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TC /analyze- /errorReport:prompt src\lapi.c src\lauxlib.c src\lbaselib.c src\lbitlib.c src\lcode.c src\lcorolib.c src\lctype.c src\ldblib.c src\ldebug.c src\ldo.c src\ldump.c src\lfunc.c src\lgc.c src\linit.c src\liolib.c src\llex.c src\lmathlib.c src\lmem.c src\loadlib.c src\lobject.c src\lopcodes.c src\loslib.c src\lparser.c src\lstate.c src\lstring.c src\lstrlib.c src\ltable.c src\ltablib.c src\ltm.c src\lundump.c src\lvm.c src\lzio.c
+         lzio.c
+         lvm.c
+         lundump.c
+         ltm.c
+         ltablib.c
+         ltable.c
+         lstrlib.c
+         lstring.c
+         lstate.c
+         lparser.c
+         loslib.c
+         lopcodes.c
+         lobject.c
+         loadlib.c
+         lmem.c
+         lmathlib.c
+         llex.c
+         liolib.c
+         linit.c
+         lgc.c
+         正在生成代码...
+         正在编译...
+         lfunc.c
+         ldump.c
+         ldo.c
+         ldebug.c
+         ldblib.c
+         lctype.c
+         lcorolib.c
+         lcode.c
+         lbitlib.c
+         lbaselib.c
+         lauxlib.c
+         lapi.c
+         正在生成代码...
+       Link:
+         F:\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\PathFinderTest\lua.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"..\PathFinderTest\lua.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\PathFinderTest\lua.lib" /MACHINE:X86 /DLL Debug\lapi.obj
          Debug\lauxlib.obj
          Debug\lbaselib.obj
          Debug\lbitlib.obj
@@ -35,9 +72,9 @@
          Debug\lvm.obj
          Debug\lzio.obj
             正在创建库 ..\PathFinderTest\lua.lib 和对象 ..\PathFinderTest\lua.exp
-         lua.vcxproj -> D:\work\navmesh_pathfinder_demo\lua\..\PathFinderTest\lua.dll
-     1>已完成生成项目“D:\work\navmesh_pathfinder_demo\lua\lua.vcxproj”(Build 个目标)的操作。
+         lua.vcxproj -> H:\navmesh_pathfinder\lua\..\PathFinderTest\lua.dll
+     1>已完成生成项目“H:\navmesh_pathfinder\lua\lua.vcxproj”(Build 个目标)的操作。
 
 生成成功。
 
-已用时间 00:00:00.51
+已用时间 00:00:35.25
