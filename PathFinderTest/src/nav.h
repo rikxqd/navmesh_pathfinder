@@ -106,13 +106,14 @@ struct nav_mesh_context
 	//所有边(同一条边有ab和ba两条)
 	struct nav_border_context border_ctx;
 	struct nav_border_search_node** border_searcher;
-	 
+
 	//多边形节点
 	struct nav_node* node;
 	int size;
 
 	//格子信息
 	struct nav_tile* tile;
+	
 	struct vector3 lt;
 	struct vector3 br;
 	int width;

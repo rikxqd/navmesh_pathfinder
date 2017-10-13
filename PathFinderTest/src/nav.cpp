@@ -335,7 +335,8 @@ void tile_add_node(struct nav_tile* tile,int index)
 {
 	if (tile->size == 0)
 	{
-		tile->size = 4;
+		tile->offset = 0;
+		tile->size = 1;
 		tile->node = (int*)malloc(sizeof(int) * tile->size);
 	}
 	if (tile->offset >= tile->size)
@@ -345,17 +346,15 @@ void tile_add_node(struct nav_tile* tile,int index)
 		tile->node = (int*)malloc(sizeof(int) * nsize);
 		memcpy(tile->node,onode,sizeof(int)* tile->size);
 		tile->size = nsize;
+		free(onode);
 	}
 	tile->node[tile->offset] = index;
 	tile->offset++;
 }
 
 //ÇÐ·Ö¸ñ×ÓÐÅÏ¢,Ã¿¸ö¸ñ×Ó¿çÁ¢ÁË¶àÉÙ¸ö¶à±ßÐÎ
-void make_tile(struct nav_mesh_context* ctx)
+void create_tile(struct nav_mesh_context* ctx)
 {
-	ctx->width = ctx->br.x - ctx->lt.x;
-	ctx->heigh = ctx->br.z - ctx->lt.z;
- 
 	int count = ctx->width * ctx->heigh;
 
 	ctx->tile = (struct nav_tile*)malloc(sizeof(struct nav_tile)*count);
@@ -417,6 +416,17 @@ void make_tile(struct nav_mesh_context* ctx)
 		else
 			tile->mask = 0;
 	}
+}
+
+void release_tile(struct nav_mesh_context* ctx)
+{
+	int count = ctx->width * ctx->heigh;
+	for (int i = 0;i < count;i++)
+	{
+		if (ctx->tile[i].node != NULL)
+			free(ctx->tile[i].node);
+	}
+	free(ctx->tile);
 }
 
 struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
@@ -489,6 +499,9 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 		}
 	}
 
+	mesh_ctx->width = mesh_ctx->br.x - mesh_ctx->lt.x;
+	mesh_ctx->heigh = mesh_ctx->br.z - mesh_ctx->lt.z;
+
 	//¼ÓÔØ¶à±ßÐÎË÷Òý
 	for (i = 0;i < p_cnt;i++)
 	{
@@ -547,7 +560,7 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	release_border_searcher(mesh_ctx);
 
 #ifdef USE_NAV_TILE
-	make_tile(mesh_ctx);
+	create_tile(mesh_ctx);
 #endif
 
 	mesh_ctx->result.size = 8;
@@ -566,9 +579,12 @@ void release_mesh(struct nav_mesh_context* ctx)
 	free(ctx->vertices);
 	free(ctx->border_ctx.borders);
 	free(ctx->node);
-	free(ctx->tile);
+#ifdef USE_NAV_TILE
+	release_tile(ctx);
+#endif
 	free(ctx->mask_ctx.mask);
 	minheap_delete(ctx->openlist);
+	free(ctx);
 }
 
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)
