@@ -71,4 +71,5 @@ public:
 	afx_msg void OnEnChangeEdit4();
 	afx_msg void OnIgnorePath();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnClose();
 };

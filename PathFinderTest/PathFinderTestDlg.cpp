@@ -76,6 +76,7 @@ BEGIN_MESSAGE_MAP(CPathFinderTestDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT4, &CPathFinderTestDlg::OnEnChangeEdit4)
 	ON_BN_CLICKED(IDC_BUTTON4, &CPathFinderTestDlg::OnIgnorePath)
 	ON_WM_RBUTTONUP()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -84,7 +85,7 @@ END_MESSAGE_MAP()
 BOOL CPathFinderTestDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	_CrtSetBreakAlloc(3850);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -147,6 +148,7 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 			p_ptr[i][j] = tmp[j].GetInt();
 		}
 	}
+	free(json);
 	struct vector3 start,over;
 	start.x = 16;
 	start.z = 7;
@@ -164,37 +166,16 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	luaL_requiref(L, "nav", luaopen_nav_core, 0);
 	luaL_openlibs(L);
 
-	//int r = luaL_loadfile(L,"test.lua");
-	//	if (r != LUA_OK) 
-	//	{
-	//		CString str(lua_tostring(L,-1));
-	//		MessageBox(str);
-	//	}
-	//	else
-	//	{
-	//		r = lua_pcall(L,0,0,0);
-	//		if (r != LUA_OK) 
-	//		{
-	//			CString str(lua_tostring(L,-1));
-	//			MessageBox(str);
-	//			
-	//		}
-	//		else
-	//		{
-	//			lua_getglobal(L,"create");
-	//			lua_pushlightuserdata(L,v_ptr);
-	//			lua_pushnumber(L,v.Size());
-	//			lua_pushlightuserdata(L,p_ptr);
-	//			lua_pushnumber(L,p.Size());
-	//			r = lua_pcall(L,4,0,0);
-	//			if (r != LUA_OK) 
-	//			{
-	//				CString str(lua_tostring(L,-1));
-	//			MessageBox(str);
-	//			}
-	//		}
-	//		
-	//	}
+	for (int i = 0; i < v.Size(); i++)
+	{
+		free(v_ptr[i]);
+	}
+	free(v_ptr);
+	for (int i = 0; i < p.Size(); i++)
+	{
+		free(p_ptr[i]);
+	}
+	free(p_ptr);
 
 	CString str;
 	str.Format(_T("%d"),xoffset);
@@ -841,4 +822,13 @@ void CPathFinderTestDlg::OnRButtonUp(UINT nFlags, CPoint point)
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	this->DrawOver(point);
 	CDialogEx::OnRButtonUp(nFlags, point);
+}
+
+
+void CPathFinderTestDlg::OnClose()
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	release_mesh(mesh_ctx);
+	_CrtDumpMemoryLeaks();
+	CDialogEx::OnClose();
 }

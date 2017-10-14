@@ -62,7 +62,7 @@ struct nav_node
 	int link_border;
 
 	int reserve;
-	struct vector3 pos;;
+	struct vector3 pos;
 };
 
 struct nav_border
