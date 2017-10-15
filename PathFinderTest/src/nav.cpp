@@ -424,17 +424,7 @@ void create_tile(struct nav_mesh_context* ctx)
 				if (in_node(ctx,j,tile->center.x,tile->center.y,tile->center.z))
 					tile_add_node(tile,j);
 			}
-
 		}
-	}
-
-	for (int i = 0;i < count;i++)
-	{
-		struct nav_tile* tile = &ctx->tile[i];
-		if (tile->node == NULL)
-			tile->mask = -1;
-		else
-			tile->mask = 0;
 	}
 }
 

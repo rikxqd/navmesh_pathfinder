@@ -15,7 +15,7 @@
 #define NULL 0
 #endif
 
-//#define USE_NAV_TILE
+#define USE_NAV_TILE
 
 struct vector3
 {
@@ -91,7 +91,6 @@ struct nav_border_context
 
 struct nav_tile
 {
-	int mask;
 	int* node;
 	int offset;
 	int size;
