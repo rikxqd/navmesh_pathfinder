@@ -134,7 +134,7 @@ struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double 
 		if (in_node(ctx,i,x,y,z))
 			return &ctx->node[i];
 	}
-
+	return NULL;
 #else
 
 	//ÀûÓÃ¸ñ×Ó¿ìËÙ²éÕÒ
