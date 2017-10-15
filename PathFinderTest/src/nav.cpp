@@ -371,7 +371,6 @@ void tile_add_node(struct nav_tile* tile,int index)
 void create_tile(struct nav_mesh_context* ctx)
 {
 	int count = ctx->width * ctx->heigh;
-
 	ctx->tile = (struct nav_tile*)malloc(sizeof(struct nav_tile)*count);
 	memset(ctx->tile,0,sizeof(struct nav_tile)*count);
 
@@ -427,6 +426,7 @@ void create_tile(struct nav_mesh_context* ctx)
 		}
 	}
 }
+
 
 void release_tile(struct nav_mesh_context* ctx)
 {

@@ -85,7 +85,7 @@ END_MESSAGE_MAP()
 BOOL CPathFinderTestDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	_CrtSetBreakAlloc(3850);
+	//_CrtSetBreakAlloc(3850);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -163,9 +163,21 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	vtOver = vtBegin = NULL;
 
 	L = luaL_newstate();
-	luaL_requiref(L, "nav", luaopen_nav_core, 0);
 	luaL_openlibs(L);
 
+	luaL_requiref(L, "nav", luaopen_nav_core, 1);
+	
+	lua_getglobal(L, "nav");
+	lua_getfield(L, -1, "create");
+
+	lua_pushinteger(L, 1001);
+	lua_pushlightuserdata(L, v_ptr);
+	lua_pushinteger(L, v.Size());
+	lua_pushlightuserdata(L, p_ptr);
+	lua_pushinteger(L, p.Size());
+
+	assert(lua_pcall(L, 5, 1, 0) == LUA_OK, lua_tostring(L, -1));
+	
 	for (int i = 0; i < v.Size(); i++)
 	{
 		free(v_ptr[i]);
@@ -829,6 +841,7 @@ void CPathFinderTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	release_mesh(mesh_ctx);
+	lua_close(L);
 	_CrtDumpMemoryLeaks();
 	CDialogEx::OnClose();
 }
