@@ -198,8 +198,7 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	((CEdit*)GetDlgItem(IDC_EDIT4))->SetWindowTextW(str);
 
 	QueryPerformanceFrequency(&freq);
-	timeCost = new CStatic();
-	timeCost->Create(_T(""), WS_CHILD | WS_VISIBLE | SS_CENTER, CRect(10, 50, 150, 100), this);
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -322,7 +321,7 @@ void CPathFinderTestDlg::OnPath()
 		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart)*1000) / (double)freq.QuadPart;
 		CString str;
 		str.Format(_T("耗时:%fms"), pathCost);
-		timeCost->SetWindowText(str);
+		((CStatic*)GetDlgItem(IDC_STATIC1))->SetWindowTextW(str);
 
 		DrawPath(path->wp,path->offset);
 
@@ -540,6 +539,10 @@ void CPathFinderTestDlg::DrawBegin(CPoint& pos)
 	vtBegin->x = pos.x;
 	vtBegin->z = pos.y;
 
+	CString text;
+	text.Format(_T("起点:x:%f,z:%f"), (double)(pos.x - xoffset) / scale, (double)(pos.y - yoffset) / scale);
+	((CStatic*)GetDlgItem(IDC_STATIC2))->SetWindowTextW(text);
+
 	CString temp;
 
 	if (node->size == 3)
@@ -583,6 +586,11 @@ void CPathFinderTestDlg::DrawOver(CPoint& pos)
 	vtOver = (vector3*)malloc(sizeof(*vtOver));
 	vtOver->x = pos.x;
 	vtOver->z = pos.y;
+
+	CString str;
+	str.Format(_T("终点:x:%05f,z:%05f"), (double)(pos.x - xoffset) / scale, (double)(pos.y - yoffset) / scale);
+	((CStatic*)GetDlgItem(IDC_STATIC3))->SetWindowTextW(str);
+
 	Invalidate();
 }
 
@@ -635,7 +643,7 @@ void CPathFinderTestDlg::Straightline()
 		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart) * 1000) / (double)freq.QuadPart;
 		CString str;
 		str.Format(_T("耗时:%fms"), pathCost);
-		timeCost->SetWindowText(str);
+		((CStatic*)GetDlgItem(IDC_STATIC1))->SetWindowTextW(str);
 		if (ok)
 		{
 			POINT from;
@@ -865,6 +873,7 @@ void CPathFinderTestDlg::OnClose()
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	release_mesh(mesh_ctx);
 	lua_close(L);
+
 	_CrtDumpMemoryLeaks();
 	CDialogEx::OnClose();
 }
