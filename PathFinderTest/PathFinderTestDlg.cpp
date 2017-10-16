@@ -190,12 +190,16 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	free(p_ptr);
 
 	CString str;
-	str.Format(_T("%d"),xoffset);
+	str.Format(_T("%d"), xoffset);
 	((CEdit*)GetDlgItem(IDC_EDIT2))->SetWindowTextW(str);
 	str.Format(_T("%d"),yoffset);
 	((CEdit*)GetDlgItem(IDC_EDIT3))->SetWindowTextW(str);
 	str.Format(_T("%d"),scale);
 	((CEdit*)GetDlgItem(IDC_EDIT4))->SetWindowTextW(str);
+
+	QueryPerformanceFrequency(&freq);
+	timeCost = new CStatic();
+	timeCost->Create(_T(""), WS_CHILD | WS_VISIBLE | SS_CENTER, CRect(10, 50, 150, 100), this);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -308,7 +312,18 @@ void CPathFinderTestDlg::OnPath()
 		struct vector3 ptOver;
 		ptOver.x = (double)(vtOver->x-xoffset)/scale;
 		ptOver.z = (double)(vtOver->z-yoffset)/scale;
+
+		LARGE_INTEGER counterBegin, counterEnd;
+		QueryPerformanceCounter(&counterBegin);
 		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+
+		QueryPerformanceCounter(&counterEnd);
+		
+		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart)*1000) / (double)freq.QuadPart;
+		CString str;
+		str.Format(_T("耗时:%fms"), pathCost);
+		timeCost->SetWindowText(str);
+
 		DrawPath(path->wp,path->offset);
 
 		ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
@@ -611,8 +626,16 @@ void CPathFinderTestDlg::Straightline()
 		vt1.y = 0;
 		vt1.z = (double)(vtOver->z-yoffset)/scale;
 
+		LARGE_INTEGER counterBegin, counterEnd;
+		QueryPerformanceCounter(&counterBegin);
 		vector3 vt;
 		bool ok = raycast(mesh_ctx,&vt0,&vt1,&vt);
+		QueryPerformanceCounter(&counterEnd);
+
+		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart) * 1000) / (double)freq.QuadPart;
+		CString str;
+		str.Format(_T("耗时:%fms"), pathCost);
+		timeCost->SetWindowText(str);
 		if (ok)
 		{
 			POINT from;

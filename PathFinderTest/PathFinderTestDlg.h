@@ -59,6 +59,9 @@ public:
 	int sizePath;
 	struct vector3* resultPath;
 	struct lua_State* L;
+
+	LARGE_INTEGER freq;
+	CStatic* timeCost;
 public:
 	afx_msg void OnUpdateIddPathfindertestDialog(CCmdUI *pCmdUI);
 	afx_msg void Straightline();
