@@ -280,7 +280,7 @@ double G_COST(struct nav_node* from,struct nav_node* to)
 	//double dy = from->center.y - to->center.y;
 	double dy = 0;
 	double dz = from->pos.z - to->pos.z;
-	return sqrt(dx*dx + dy* dy + dz* dz);
+	return sqrt(dx*dx + dy* dy + dz* dz) * GRATE;
 }
 
 double H_COST(struct nav_node* from, struct vector3* to)
@@ -289,7 +289,7 @@ double H_COST(struct nav_node* from, struct vector3* to)
 	//double dy = from->center.y - to->y;
 	double dy = 0;
 	double dz = from->center.z - to->z;
-	return sqrt(dx*dx + dy* dy + dz* dz);
+	return sqrt(dx*dx + dy* dy + dz* dz) * HRATE;
 }
 
 int node_cmp(struct element * left, struct element * right) 
@@ -944,7 +944,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 	}
 }
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1)
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dump dump, void* args)
 {
 	result_init(mesh_ctx);
 
@@ -1006,6 +1006,8 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vec
 					linked_node->link_parent = current;
 					linked_node->link_border = linked_node->reserve;
 					minheap_push(mesh_ctx->openlist, &linked_node->elt);
+					if (dump != NULL)
+						dump(args, linked_node->id);
 				}
 			}
 		}

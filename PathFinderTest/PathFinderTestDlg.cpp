@@ -282,6 +282,26 @@ int lua_draw(lua_State* L)
 	return 0;
 }
 
+
+void OnSearchDump(void* self, int index)
+{
+	CPathFinderTestDlg* dlgPtr = (CPathFinderTestDlg*)self;
+	CClientDC dc(dlgPtr);
+	CBrush brush(RGB(123, 255, 0));
+	dc.SelectObject(&brush);
+
+	struct nav_node* node = get_node(dlgPtr->mesh_ctx, index);
+	CPoint* pt = new CPoint[node->size];
+	for (int j = 0; j < node->size; j++)
+	{
+		struct vector3* pos = &dlgPtr->mesh_ctx->vertices[node->poly[j]];
+		pt[j].x = pos->x*dlgPtr->scale + dlgPtr->xoffset;
+		pt[j].y = pos->z*dlgPtr->scale + dlgPtr->yoffset;
+	}
+	dc.Polygon(pt, node->size);
+	delete[] pt;
+}
+
 void CPathFinderTestDlg::OnPath()
 {
 	// TODO:  在此添加控件通知处理程序代码
@@ -314,7 +334,7 @@ void CPathFinderTestDlg::OnPath()
 
 		LARGE_INTEGER counterBegin, counterEnd;
 		QueryPerformanceCounter(&counterBegin);
-		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		struct nav_path_context* path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL,this);
 
 		QueryPerformanceCounter(&counterEnd);
 		
@@ -821,7 +841,7 @@ void CPathFinderTestDlg::OnIgnorePath()
 		struct vector3 smooth[64];
 		int index = 0;
 
-		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver);
+		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver,NULL,NULL);
 		int i = 0;
 		while(i < path->offset)
 		{

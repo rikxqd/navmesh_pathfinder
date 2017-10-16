@@ -17,6 +17,9 @@
 
 //#define USE_NAV_TILE
 
+#define GRATE 1
+#define HRATE 2
+
 struct vector3
 {
 	double x;
@@ -140,6 +143,7 @@ struct vertex_sort_info
 	struct vector3 center;
 };
 
+typedef void(*search_dump)(void* ud, int index);
 
 struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
 void release_mesh(struct nav_mesh_context* ctx);
@@ -147,7 +151,7 @@ void release_mesh(struct nav_mesh_context* ctx);
 struct nav_node* get_node(struct nav_mesh_context* ctx,int id);
 struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1);
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dump dump,void* args);
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
