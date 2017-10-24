@@ -45,8 +45,6 @@ void
 up(struct minheap * mh, int index) {
 	int parent = PARENT(index);
 	while (parent >= 1) {
-		assert(mh->elts[index]);
-		assert(mh->elts[parent]);
 		if (mh->less(mh->elts[index], mh->elts[parent])) {
 			MINHEAP_SWAP(mh, index, parent);
 			index = parent;
@@ -60,29 +58,25 @@ up(struct minheap * mh, int index) {
 
 void
 down(struct minheap * mh, int index) {
-	int l = LEFT(index);
-	int r = RIGHT(index);
-	int min = index;
-	if (l <= mh->size) {
-		assert(mh->elts[l]);
-		assert(mh->elts[index]);
-	}
-
-	if (l <= mh->size && mh->less(mh->elts[l], mh->elts[index]))
-		min = l;
-
-	if (r <= mh->size) {
-		assert(mh->elts[r]);
-		assert(mh->elts[min]);
-	}
-
-	if (r <= mh->size && mh->less(mh->elts[r], mh->elts[min]))
-		min = r;
-
-	if (min != index)
+	while (index <= mh->size)
 	{
-		MINHEAP_SWAP(mh, index, min);
-		down(mh, min);
+		int l = LEFT(index);
+		int r = RIGHT(index);
+		int min = index;
+
+		if (l <= mh->size && mh->less(mh->elts[l], mh->elts[index]))
+			min = l;
+
+		if (r <= mh->size && mh->less(mh->elts[r], mh->elts[min]))
+			min = r;
+
+		if (min != index)
+		{
+			MINHEAP_SWAP(mh, index, min);
+			index = min;
+		}
+		else
+			return;
 	}
 }
 

@@ -77,6 +77,8 @@ BEGIN_MESSAGE_MAP(CPathFinderTestDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON4, &CPathFinderTestDlg::OnIgnorePath)
 	ON_WM_RBUTTONUP()
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_BUTTON5, &CPathFinderTestDlg::OnLoadMesh)
+	ON_BN_CLICKED(IDC_BUTTON6, &CPathFinderTestDlg::OnSaveMesh)
 END_MESSAGE_MAP()
 
 
@@ -161,22 +163,6 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	polyOver = -1;
 	scale = 4;
 	vtOver = vtBegin = NULL;
-
-	L = luaL_newstate();
-	luaL_openlibs(L);
-
-	luaL_requiref(L, "nav", luaopen_nav_core, 1);
-	
-	lua_getglobal(L, "nav");
-	lua_getfield(L, -1, "create");
-
-	lua_pushinteger(L, 1001);
-	lua_pushlightuserdata(L, v_ptr);
-	lua_pushinteger(L, v.Size());
-	lua_pushlightuserdata(L, p_ptr);
-	lua_pushinteger(L, p.Size());
-
-	assert(lua_pcall(L, 5, 1, 0) == LUA_OK, lua_tostring(L, -1));
 	
 	for (int i = 0; i < v.Size(); i++)
 	{
@@ -324,18 +310,27 @@ void CPathFinderTestDlg::OnPath()
 		{
 			set_mask(&mesh_ctx->mask_ctx,i,1);
 		}
-		set_mask(&mesh_ctx->mask_ctx,3,0);
-		struct vector3 ptBegin;
-		ptBegin.x = (double)(vtBegin->x-xoffset)/scale;
-		ptBegin.z = (double)(vtBegin->z-yoffset)/scale;
-		struct vector3 ptOver;
-		ptOver.x = (double)(vtOver->x-xoffset)/scale;
-		ptOver.z = (double)(vtOver->z-yoffset)/scale;
+		set_mask(&mesh_ctx->mask_ctx,1,0);
+
 
 		LARGE_INTEGER counterBegin, counterEnd;
 		QueryPerformanceCounter(&counterBegin);
-		struct nav_path_context* path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL,this);
+		struct vector3 ptBegin;
+		struct vector3 ptOver;
+		ptBegin.x = (double)(vtBegin->x - xoffset) / scale;
+		ptBegin.z = (double)(vtBegin->z - yoffset) / scale;
 
+		ptOver.x = (double)(vtOver->x - xoffset) / scale;
+		ptOver.z = (double)(vtOver->z - yoffset) / scale;
+		struct nav_path_context* path;
+		/*for (int i = 0; i < 10000;i++)
+		{
+
+		
+		path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, this);
+		}
+		*/
+		path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, this);
 		QueryPerformanceCounter(&counterEnd);
 		
 		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart)*1000) / (double)freq.QuadPart;
@@ -415,29 +410,35 @@ void CPathFinderTestDlg::DrawMap()
 	}
 
 	obrush = dc.SelectObject(&brush);
-	CBrush brush_empty0(RGB(255,255,0));
-	CBrush brush_empty1(RGB(255,0,0));
-	CBrush brush_empty2(RGB(88,88,0));
-	//for (int i = 0;i < mesh_ctx->width* mesh_ctx->heigh;i++)
+	//CBrush brush_empty0(RGB(255,255,0));
+	//CBrush brush_empty1(RGB(255,0,0));
+	//CBrush brush_empty2(RGB(88,88,0));
+	//for (int i = 0; i < mesh_ctx->width* mesh_ctx->heigh; i++)
 	//{
-	//	struct nav_tile* tile = & mesh_ctx->tile[i];
+	//	struct nav_tile* tile = &mesh_ctx->tile[i];
 	//	CPoint pt[4];
 
-	//	if (tile->mask == -1 )
+	//	if (tile->offset == 0)
+	//	{
 	//		dc.SelectObject(&brush_empty0);
+	//	}
 	//	else
 	//		dc.SelectObject(&brush_empty1);
+	///*	if (tile->mask == -1)
+	//		dc.SelectObject(&brush_empty0);
+	//	else*/
+	//		//dc.SelectObject(&brush_empty1);
 
-	//	for (int j = 0; j < 4;j++)
+	//	for (int j = 0; j < 4; j++)
 	//	{
 	//		struct vector3* pos = &tile->pos[j];
 
-	//		pt[j].x = pos->x*scale+xoffset+300;
-	//		pt[j].y = pos->z*scale+yoffset;
+	//		pt[j].x = pos->x*scale + xoffset + 500;
+	//		pt[j].y = pos->z*scale + yoffset;
 	//	}
-	//	dc.Polygon(pt,4);
+	//	dc.Polygon(pt, 4);
 	//}
-	dc.SelectObject(obrush);
+	//dc.SelectObject(obrush);
 	
 	if (polyBegin != -1)
 	{
@@ -479,53 +480,54 @@ void CPathFinderTestDlg::DrawMap()
 		CBrush brush(RGB(50,50,50));
 		dc.SelectObject(&brush);
 		dc.Ellipse(vtBegin->x-3,vtBegin->z-3,vtBegin->x+3,vtBegin->z+3); 
-		dc.Ellipse(vtBegin->x-3+300,vtBegin->z-3,vtBegin->x+3+300,vtBegin->z+3); 
+		dc.Ellipse(vtBegin->x-3+500,vtBegin->z-3,vtBegin->x+3+500,vtBegin->z+3); 
 		int x = (vtBegin->x-xoffset)/scale - mesh_ctx->lt.x;
 		int z = (vtBegin->z-yoffset)/scale - mesh_ctx->lt.z;
 		int index = x + z * mesh_ctx->width;
 		struct nav_tile* tile = & mesh_ctx->tile[index];
 
-		////格子跨跃多少个多边形
-		//for (int i = 0;i < tile->offset;i++)
-		//{
-		//	int node_id = tile->node[i];
-		//	CBrush brush(RGB(111,111,66));
-		//	dc.SelectObject(&brush);
+		//格子跨跃多少个多边形
+		/*	for (int i = 0;i < tile->offset;i++)
+			{
+			int node_id = tile->node[i];
 
-		//	struct nav_node* node = get_node(mesh_ctx,node_id);
-		//	CPoint* pt0 = new CPoint[node->size];
-		//	for (int j = 0; j < node->size;j++)
-		//	{
-		//		struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
-		//		pt0[j].x = pos->x*scale+xoffset;
-		//		pt0[j].y = pos->z*scale+yoffset;
-		//	}
-		//	dc.Polygon(pt0,node->size);
-		//	delete[] pt0;
-		//}
+			CBrush brush(RGB(111,111,66));
+			dc.SelectObject(&brush);
 
-		//
-		//CPoint pt[4];
-		//CBrush brush00(RGB(99,99,99));
-		//dc.SelectObject(&brush00);
+			struct nav_node* node = get_node(mesh_ctx,node_id);
+			CPoint* pt0 = new CPoint[node->size];
+			for (int j = 0; j < node->size;j++)
+			{
+			struct vector3* pos = &mesh_ctx->vertices[node->poly[j]];
+			pt0[j].x = pos->x*scale+xoffset;
+			pt0[j].y = pos->z*scale+yoffset;
+			}
+			dc.Polygon(pt0,node->size);
+			delete[] pt0;
+			}
+			*/
+		
+		CPoint pt[4];
+		CBrush brush00(RGB(99,99,99));
+		dc.SelectObject(&brush00);
 
-		//for (int j = 0; j < 4;j++)
-		//{
-		//	struct vector3* pos = &tile->pos[j];
+		for (int j = 0; j < 4;j++)
+		{
+			struct vector3* pos = &tile->pos[j];
 
-		//	pt[j].x = pos->x*scale+xoffset;
-		//	pt[j].y = pos->z*scale+yoffset;
-		//}
-		//dc.Polygon(pt,4);
+			pt[j].x = pos->x*scale+xoffset;
+			pt[j].y = pos->z*scale+yoffset;
+		}
+		dc.Polygon(pt,4);
 
-		//for (int j = 0; j < 4;j++)
-		//{
-		//	struct vector3* pos = &tile->pos[j];
+		for (int j = 0; j < 4;j++)
+		{
+			struct vector3* pos = &tile->pos[j];
 
-		//	pt[j].x = pos->x*scale+xoffset +300;
-		//	pt[j].y = pos->z*scale+yoffset;
-		//}
-		//dc.Polygon(pt,4);
+			pt[j].x = pos->x*scale+xoffset +300;
+			pt[j].y = pos->z*scale+yoffset;
+		}
+		dc.Polygon(pt,4);
 	}
 
 	if (vtOver != NULL)
@@ -643,7 +645,7 @@ void CPathFinderTestDlg::Straightline()
 		{
 			set_mask(&mesh_ctx->mask_ctx,i,1);
 		}
-		set_mask(&mesh_ctx->mask_ctx,3,0);
+		set_mask(&mesh_ctx->mask_ctx,1,0);
 		vector3 vt0;
 		vt0.x = (double)(vtBegin->x-xoffset)/scale;
 		vt0.y = 0;
@@ -841,41 +843,54 @@ void CPathFinderTestDlg::OnIgnorePath()
 		struct vector3 smooth[64];
 		int index = 0;
 
-		struct nav_path_context* path = astar_find(mesh_ctx,&ptBegin,&ptOver,NULL,NULL);
-		int i = 0;
-		while(i < path->offset)
-		{
-			smooth[index].x = path->wp[i].x;
-			smooth[index].z = path->wp[i].z;
-			index++;
-			int j;
-			for(j = i + 2;j < path->offset;j++)
-			{
-				struct vector3 result;
-				if (raycast(mesh_ctx,&path->wp[i],&path->wp[j],&result))
-				{
-					double distance = (result.x - path->wp[j].x)*(result.x - path->wp[j].x)+(result.z - path->wp[j].z)*(result.z - path->wp[j].z) ;
-					if (distance!= 0)
-					{
-						i = j-1;
-						break;
-					}
-				}
-				else
-				{
-					i = j-1;
-					break;
-				}
-			}
-			if (j == path->offset)
-			{
-				smooth[index].x = path->wp[path->offset-1].x;
-				smooth[index].z = path->wp[path->offset-1].z;
-				index++;
-				break;
-			}
-		}
-		DrawPath(smooth,index);
+		LARGE_INTEGER counterBegin, counterEnd;
+		QueryPerformanceCounter(&counterBegin);
+		vector3 vt;
+		struct nav_path_context* path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, NULL);
+	
+
+		//
+		//int i = 0;
+		//while(i < path->offset)
+		//{
+		//	smooth[index].x = path->wp[i].x;
+		//	smooth[index].z = path->wp[i].z;
+		//	index++;
+		//	int j;
+		//	for(j = i + 2;j < path->offset;j++)
+		//	{
+		//		struct vector3 result;
+		//		if (raycast(mesh_ctx,&path->wp[i],&path->wp[j],&result))
+		//		{
+		//			double distance = (result.x - path->wp[j].x)*(result.x - path->wp[j].x)+(result.z - path->wp[j].z)*(result.z - path->wp[j].z) ;
+		//			if (distance!= 0)
+		//			{
+		//				i = j-1;
+		//				break;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			i = j-1;
+		//			break;
+		//		}
+		//	}
+		//	if (j == path->offset)
+		//	{
+		//		smooth[index].x = path->wp[path->offset-1].x;
+		//		smooth[index].z = path->wp[path->offset-1].z;
+		//		index++;
+		//		break;
+		//	}
+		//}
+		QueryPerformanceCounter(&counterEnd);
+
+		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart) * 1000) / (double)freq.QuadPart;
+		CString str;
+		str.Format(_T("耗时:%fms"), pathCost);
+		((CStatic*)GetDlgItem(IDC_STATIC1))->SetWindowTextW(str);
+
+		DrawPath(path->wp, path->offset);
 	}
 }
 
@@ -892,8 +907,81 @@ void CPathFinderTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	release_mesh(mesh_ctx);
-	lua_close(L);
-
 	_CrtDumpMemoryLeaks();
 	CDialogEx::OnClose();
+}
+
+
+void CPathFinderTestDlg::OnLoadMesh()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	TCHAR szFilter[] = _T("json文件(*.json)|*.json|所有文件(*.*)|*.*||");
+	CFileDialog fileDlg(TRUE, _T("mesh"), NULL, 0, szFilter, this);
+	CString strFilePath;
+ 
+	if (IDOK == fileDlg.DoModal())
+	{
+		if (mesh_ctx != NULL)
+		{
+			release_mesh(mesh_ctx);
+			mesh_ctx = NULL;
+		}
+		strFilePath = fileDlg.GetPathName();
+
+		rapidjson::Document _config;
+
+		char *lText;
+		int iTexLen = WideCharToMultiByte(CP_ACP, 0, strFilePath.GetBuffer(0), -1, NULL, 0, NULL, 0);
+
+		lText = (char*)calloc(iTexLen, sizeof(char));
+
+		memset(lText, 0, iTexLen*sizeof(char));  //初始化空间
+
+		WideCharToMultiByte(CP_ACP, 0, strFilePath.GetBuffer(0), -1, lText, iTexLen, NULL, 0);  // 将strText中的字符串全部转换成ASCII，并将其保存在lText开辟的字符空间中
+
+		FILE* file = fopen(lText, "r");
+		//FILE* file = fopen("E:\\workplace\\navmesh\\navmesh_pathfinder\\PathFinderTest\\mesh.json", "r");
+		assert(file != NULL);
+		fseek(file, 0, SEEK_END);
+		int len = ftell(file);
+		char* json = (char*)malloc(len + 1);
+		memset(json, 0, len + 1);
+		rewind(file);
+		fread(json, 1, len, file);
+		fclose(file);
+		_config.Parse(json);
+
+		const rapidjson::Value& v = _config["v"];
+		double** v_ptr = (double**)malloc(sizeof(*v_ptr) * v.Size());
+		for (int i = 0; i < v.Size(); i++)
+		{
+			v_ptr[i] = (double*)malloc(sizeof(double)* 3);
+			const rapidjson::Value& tmp = v[i];
+			v_ptr[i][0] = tmp[0].GetDouble();
+			v_ptr[i][1] = tmp[1].GetDouble();
+			v_ptr[i][2] = tmp[2].GetDouble();
+		}
+
+		const rapidjson::Value& p = _config["p"];
+		int** p_ptr = (int**)malloc(sizeof(*p_ptr) * p.Size());
+		int a = p.Size();
+		for (int i = 0; i < p.Size(); i++)
+		{
+			const rapidjson::Value& tmp = p[i];
+			p_ptr[i] = (int*)malloc(sizeof(int)*(tmp.Size()));
+			for (int j = 0; j < tmp.Size(); j++)
+			{
+				p_ptr[i][j] = tmp[j].GetInt();
+			}
+		}
+		free(json);
+
+		mesh_ctx = load_mesh(v_ptr, v.Size(), p_ptr, p.Size());
+	}
+}
+
+
+void CPathFinderTestDlg::OnSaveMesh()
+{
+	// TODO:  在此添加控件通知处理程序代码
 }

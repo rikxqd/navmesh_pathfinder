@@ -15,7 +15,7 @@
 #define NULL 0
 #endif
 
-//#define USE_NAV_TILE
+#define USE_NAV_TILE
 
 #define GRATE 1
 #define HRATE 2

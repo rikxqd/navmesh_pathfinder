@@ -74,4 +74,6 @@ public:
 	afx_msg void OnIgnorePath();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnClose();
+	afx_msg void OnLoadMesh();
+	afx_msg void OnSaveMesh();
 };
