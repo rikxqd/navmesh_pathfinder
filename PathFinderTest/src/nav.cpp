@@ -238,14 +238,10 @@ void border_link_node(struct nav_border* border,int id)
 
 struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 {
-	if (!LIST_EMPTY((&mesh_ctx->linked)))
-		LIST_POP(&mesh_ctx->linked);
-	int i;
-	for (i = 0; i < node->size;i++)
+	for (int i = 0; i < node->size;i++)
 	{
 		int border_index = node->border[i];
 		struct nav_border* border = get_border(mesh_ctx, border_index);
-		assert(border != NULL);
 
 		int linked = -1;
 		if (border->node[0] == node->id)
@@ -253,18 +249,18 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 		else
 			linked = border->node[0];
 
-		if (linked != -1)
+		if (linked == -1)
+			continue;
+		
+		struct nav_node* tmp = get_node(mesh_ctx,linked);
+		if (tmp->list_head.pre || tmp->list_head.next)
+			continue;
+
+		if (get_mask(&mesh_ctx->mask_ctx,tmp->mask))
 		{
-			struct nav_node* tmp = get_node(mesh_ctx,linked);
-			assert(tmp != NULL);
-			if (tmp->list_head.pre || tmp->list_head.next)
-				continue;
-			if (get_mask(&mesh_ctx->mask_ctx,tmp->mask))
-			{
-				LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
-				tmp->reserve = border->opposite;
-				vector3_copy(&tmp->pos, &border->center);
-			}
+			LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
+			tmp->reserve = border->opposite;
+			vector3_copy(&tmp->pos, &border->center);
 		}
 	}
 
@@ -1001,8 +997,6 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 					linked_node->G = current->G + G_COST(current, linked_node);
 					linked_node->H = H_COST(linked_node,pt1);
 					linked_node->F = linked_node->G + linked_node->H;
-					assert(linked_node->link_border == -1);
-					assert(linked_node->link_parent == NULL);
 					linked_node->link_parent = current;
 					linked_node->link_border = linked_node->reserve;
 					minheap_push(mesh_ctx->openlist, &linked_node->elt);
