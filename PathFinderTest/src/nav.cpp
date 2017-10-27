@@ -637,30 +637,24 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 }
 
 
-#define CLEAR_NODE(n) do  \
-{\
-	n->link_parent = NULL; \
-	n->link_border = -1; \
-	n->F = n->G = n->H = 0; \
-	n->elt.index = 0; \
-} while (false);
+#define clear_node(n) do {n->link_parent = NULL; n->link_border = -1; n->F = n->G = n->H = 0; n->elt.index = 0; } while (0)
 
 
 static inline void heap_clear(struct element* elt) 
 {
 	struct nav_node *n = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
-	CLEAR_NODE(n);
+	clear_node(n);
 }
 
-#define RESET(mesh_ctx) do \
+#define reset(ctx) do \
 {\
-struct nav_node * n = NULL; \
-	while ((n = (struct nav_node*)list_pop(&mesh_ctx->closelist))) {\
-	\
-	CLEAR_NODE(n);\
+	struct nav_node * n = NULL;\
+	while ((n  = (struct nav_node*)list_pop(&(ctx)->closelist))) \
+	{\
+		clear_node(n);\
 	}\
-	minheap_clear(mesh_ctx->openlist, heap_clear); \
-} while (false);
+	minheap_clear((ctx)->openlist, heap_clear); \
+} while (0)
 
 
 
@@ -928,15 +922,15 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 		struct element* elt = minheap_pop(mesh_ctx->openlist);
 		if (!elt)
 		{
-			RESET((mesh_ctx));
+			reset(mesh_ctx);
 			return NULL;
 		}
 		node_current = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
 		if (node_current == node_over)
 		{
 			make_waypoint(mesh_ctx, pt_start, pt_over, node_current);
-			RESET((mesh_ctx));
-			CLEAR_NODE(node_current);
+			reset(mesh_ctx);
+			clear_node(node_current);
 			return &mesh_ctx->result;
 		}
 
