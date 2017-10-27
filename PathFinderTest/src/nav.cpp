@@ -223,13 +223,13 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 
 		if (get_mask(mesh_ctx->mask_ctx,tmp->mask))
 		{
-			LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
+			list_push((&mesh_ctx->linked),((struct list_node*)tmp));
 			tmp->reserve = border->opposite;
 			vector3_copy(&tmp->pos, &border->center);
 		}
 	}
 
-	if (LIST_EMPTY((&mesh_ctx->linked)))
+	if (list_empty((&mesh_ctx->linked)))
 		return NULL;
 	
 	return &mesh_ctx->linked;
@@ -541,8 +541,8 @@ struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt)
 	mesh_ctx->result.wp = (struct vector3*)malloc(sizeof(struct vector3)*mesh_ctx->result.size);
 
 	mesh_ctx->openlist = minheap_new(50 * 50, node_cmp);
-	LIST_INIT((&mesh_ctx->closelist));
-	LIST_INIT((&mesh_ctx->linked));
+	list_init(&mesh_ctx->closelist);
+	list_init(&mesh_ctx->linked);
 
 	return mesh_ctx;
 }
@@ -655,7 +655,7 @@ static inline void heap_clear(struct element* elt)
 #define RESET(mesh_ctx) do \
 {\
 struct nav_node * n = NULL; \
-	while ((n = (struct nav_node*)LIST_POP(&mesh_ctx->closelist))) {\
+	while ((n = (struct nav_node*)list_pop(&mesh_ctx->closelist))) {\
 	\
 	CLEAR_NODE(n);\
 	}\
@@ -940,13 +940,13 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 			return &mesh_ctx->result;
 		}
 
-		LIST_PUSH((&mesh_ctx->closelist), ((struct list_node*)node_current));
+		list_push((&mesh_ctx->closelist), ((struct list_node*)node_current));
 
 		struct list* linked = get_link(mesh_ctx, node_current);
 		if (linked)
 		{
 			struct nav_node* linked_node;
-			while ((linked_node = (struct nav_node*)LIST_POP(linked)))
+			while ((linked_node = (struct nav_node*)list_pop(linked)))
 			{
 				if (linked_node->elt.index)
 				{
