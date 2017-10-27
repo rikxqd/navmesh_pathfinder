@@ -925,7 +925,8 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 			reset(mesh_ctx);
 			return NULL;
 		}
-		node_current = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
+		node_current = cast_node(elt);
+		
 		if (node_current == node_over)
 		{
 			make_waypoint(mesh_ctx, pt_start, pt_over, node_current);
@@ -934,7 +935,7 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 			return &mesh_ctx->result;
 		}
 
-		list_push((&mesh_ctx->closelist), ((struct list_node*)node_current));
+		list_push(&mesh_ctx->closelist, (struct list_node*)node_current);
 
 		struct list* linked = get_link(mesh_ctx, node_current);
 		if (linked)
