@@ -20,6 +20,14 @@
 #define GRATE 1
 #define HRATE 2
 
+
+
+#define get_border(ctx,id) ((id < 0 || id > ctx->border_ctx.border_offset)?NULL:&ctx->border_ctx.borders[id])
+
+#define get_node(ctx,id) ((id < 0 || id >= ctx->size) ?NULL:&ctx->node[id])
+
+#define get_mask(ctx,index) (ctx.mask[index])
+
 struct vector3
 {
 	double x;
@@ -143,18 +151,16 @@ struct vertex_sort_info
 	struct vector3 center;
 };
 
-typedef void(*search_dump)(void* ud, int index);
+typedef void(*search_dumper)(void* ud, int index);
 
 struct nav_mesh_context* load_mesh(double** v,int v_cnt,int** p,int p_cnt);
 void release_mesh(struct nav_mesh_context* ctx);
 
-struct nav_node* get_node(struct nav_mesh_context* ctx,int id);
 struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dump dump,void* args);
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dumper dumper, void* args);
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
-int get_mask(struct nav_mesh_mask* ctx,int mask);
 
 #endif

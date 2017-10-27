@@ -310,27 +310,26 @@ void CPathFinderTestDlg::OnPath()
 		{
 			set_mask(&mesh_ctx->mask_ctx,i,1);
 		}
-		set_mask(&mesh_ctx->mask_ctx,1,0);
+		//set_mask(&mesh_ctx->mask_ctx,1,0);
 
 
 		LARGE_INTEGER counterBegin, counterEnd;
 		QueryPerformanceCounter(&counterBegin);
 		struct vector3 ptBegin;
 		struct vector3 ptOver;
-		ptBegin.x = (double)(vtBegin->x - xoffset) / scale;
-		ptBegin.z = (double)(vtBegin->z - yoffset) / scale;
-
-		ptOver.x = (double)(vtOver->x - xoffset) / scale;
-		ptOver.z = (double)(vtOver->z - yoffset) / scale;
 		struct nav_path_context* path;
-		/*for (int i = 0; i < 10000;i++)
+		for (int i = 0; i < 10000;i++)
 		{
-
-		
-		path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, this);
+			
+			ptBegin.x = (double)(vtBegin->x - xoffset) / scale;
+			ptBegin.z = (double)(vtBegin->z - yoffset) / scale;
+			
+			ptOver.x = (double)(vtOver->x - xoffset) / scale;
+			ptOver.z = (double)(vtOver->z - yoffset) / scale;
+			path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, this);
 		}
-		*/
-		path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, this);
+	
+
 		QueryPerformanceCounter(&counterEnd);
 		
 		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart)*1000) / (double)freq.QuadPart;

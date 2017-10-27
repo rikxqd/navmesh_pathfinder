@@ -2,8 +2,16 @@
 
 
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
+
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
+#define cross(vt1,vt2) ((vt1)->z * (vt2)->x - (vt1)->x * (vt2)->z)
+
+#define cross_point(a,b,c,d,result) do {result->x = ((b->x - a->x) * (c->x - d->x) * (c->z - a->z) - c->x * (b->x - a->x) * (c->z - d->z) + a->x * (b->z - a->z) * (c->x - d->x))/((b->z - a->z)*(c->x - d->x) - (b->x - a->x) * (c->z - d->z));result->z = ((b->z - a->z) * (c->z - d->z) * (c->x - a->x) - c->z * (b->z - a->z) * (c->x - d->x) + a->z * (b->x - a->x) * (c->z - d->z))/((b->x - a->x)*(c->z - d->z) - (b->z - a->z) * (c->x - d->x));} while (0)
+
+#define vector3_copy(dst,src) do {(dst)->x = (src)->x;(dst)->y = (src)->y;(dst)->z = (src)->z;} while(0)
+
+#define vector3_sub(a,b,result) do {(result)->x = (a)->x - (b)->x;(result)->y = (a)->y - (b)->y;(result)->z = (a)->z - (b)->z;} while(0)
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable)
 {
@@ -17,36 +25,6 @@ void set_mask(struct nav_mesh_mask* ctx,int mask,int enable)
 		free(mask_ptr);
 	}
 	ctx->mask[mask] = enable;
-}
-
-int get_mask(struct nav_mesh_mask* ctx,int mask)
-{
-	return ctx->mask[mask];
-}
-
-double cross(struct vector3* vt1,struct vector3* vt2)
-{
-	return vt1->z * vt2->x - vt1->x * vt2->z;
-}
-
-void cross_point(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d,struct vector3* result)
-{
-	result->x = ((b->x - a->x) * (c->x - d->x) * (c->z - a->z) - c->x * (b->x - a->x) * (c->z - d->z) + a->x * (b->z - a->z) * (c->x - d->x))/((b->z - a->z)*(c->x - d->x) - (b->x - a->x) * (c->z - d->z));
-	result->z = ((b->z - a->z) * (c->z - d->z) * (c->x - a->x) - c->z * (b->z - a->z) * (c->x - d->x) + a->z * (b->x - a->x) * (c->z - d->z))/((b->x - a->x)*(c->z - d->z) - (b->z - a->z) * (c->x - d->x));
-}
-
-void vector3_copy(struct vector3* dst,struct vector3* src)
-{
-	dst->x = src->x;
-	dst->y = src->y;
-	dst->z = src->z;
-}
-
-void vector3_sub(struct vector3* a,struct vector3* b,struct vector3* result)
-{
-	result->x = a->x - b->x;
-	result->y = a->y - b->y;
-	result->z = a->z - b->z;
 }
 
 bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vector3* d)
@@ -75,7 +53,7 @@ bool intersect(struct vector3* a,struct vector3* b,struct vector3* c,struct vect
 	return false;
 }
 
-bool in_poly(struct nav_mesh_context* mesh_ctx,int* poly,int size,struct vector3* vt3)
+bool inside_poly(struct nav_mesh_context* mesh_ctx, int* poly, int size, struct vector3* vt3)
 {
 	int forward = 0;
 	for (int i = 0;i < size;i++)
@@ -108,21 +86,14 @@ bool in_poly(struct nav_mesh_context* mesh_ctx,int* poly,int size,struct vector3
 	return true;
 }
 
-bool in_node(struct nav_mesh_context* mesh_ctx,int polyId,double x,double y,double z)
+bool inside_node(struct nav_mesh_context* mesh_ctx,int polyId,double x,double y,double z)
 {
 	struct nav_node* nav_node = &mesh_ctx->node[polyId];
 	struct vector3 vt;
 	vt.x = x;
 	vt.y = y;
 	vt.z = z;
-	return in_poly(mesh_ctx,nav_node->poly,nav_node->size,&vt);
-}
-
-struct nav_node* get_node(struct nav_mesh_context* mesh_ctx,int id)
-{
-	if (id < 0 || id >= mesh_ctx->size)
-		return NULL;
-	return &mesh_ctx->node[id];
+	return inside_poly(mesh_ctx,nav_node->poly,nav_node->size,&vt);
 }
 
 struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double y,double z)
@@ -144,19 +115,11 @@ struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double 
 	struct nav_tile* tile = &ctx->tile[index];
 	for (int i = 0;i < tile->offset;i++)
 	{
-		if (in_node(ctx,tile->node[i],x,y,z))
+		if (inside_node(ctx, tile->node[i], x, y, z))
 			return &ctx->node[tile->node[i]];
 	}
 	return NULL;
 #endif
-}
-
-struct nav_border* get_border(struct nav_mesh_context* mesh_ctx, int id)
-{
-	struct nav_border_context * border_ctx = &mesh_ctx->border_ctx;
-	if (id < 0 || id > border_ctx->border_offset)
-		return NULL;
-	return &border_ctx->borders[id];
 }
 
 struct nav_border* add_border(struct nav_mesh_context* mesh_ctx, int a, int b)
@@ -256,7 +219,7 @@ struct list* get_link(struct nav_mesh_context* mesh_ctx, struct nav_node* node)
 		if (tmp->list_head.pre || tmp->list_head.next)
 			continue;
 
-		if (get_mask(&mesh_ctx->mask_ctx,tmp->mask))
+		if (get_mask(mesh_ctx->mask_ctx,tmp->mask))
 		{
 			LIST_PUSH((&mesh_ctx->linked),((struct list_node*)tmp));
 			tmp->reserve = border->opposite;
@@ -416,7 +379,7 @@ void create_tile(struct nav_mesh_context* ctx)
 				tile_add_node(tile,j);
 			else
 			{
-				if (in_node(ctx,j,tile->center.x,tile->center.y,tile->center.z))
+				if (inside_node(ctx, j, tile->center.x, tile->center.y, tile->center.z))
 					tile_add_node(tile,j);
 			}
 		}
@@ -613,7 +576,7 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 
 	while (node)
 	{
-		if (in_node(ctx,node->id,pt1->x,pt1->y,pt1->z))
+		if (inside_node(ctx, node->id, pt1->x, pt1->y, pt1->z))
 		{
 			vector3_copy(result,pt1);
 			return true;
@@ -656,7 +619,7 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 				else
 				{
 					node = get_node(ctx,next);
-					if (get_mask(&ctx->mask_ctx,node->mask) == 0)
+					if (get_mask(ctx->mask_ctx,node->mask) == 0)
 					{
 						cross_point(pt3,pt4,pt1,pt0,result);
 						return true;
@@ -940,21 +903,24 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 	}
 }
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dump dump, void* args)
+struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt_start, struct vector3* pt_over, search_dumper dumper, void* userdata)
 {
 	result_init(mesh_ctx);
 
-	struct nav_node* from = get_node_with_pos(mesh_ctx,pt0->x,pt0->y,pt0->z);
-	struct nav_node* to = get_node_with_pos(mesh_ctx,pt1->x,pt1->y,pt1->z);
+	struct nav_node* node_start = get_node_with_pos(mesh_ctx, pt_start->x, pt_start->y, pt_start->z);
+	struct nav_node* node_over = get_node_with_pos(mesh_ctx, pt_over->x, pt_over->y, pt_over->z);
 
-	if (!from || !to || from == to)
+	if (!node_start || !node_over)
 		return NULL;
 
-	vector3_copy(&from->pos, pt0);
-	
-	minheap_push(mesh_ctx->openlist,&from->elt);
+	if (node_start == node_over)
+		return NULL;
 
-	struct nav_node* current = NULL;
+	vector3_copy(&node_start->pos, pt_start);
+	
+	minheap_push(mesh_ctx->openlist, &node_start->elt);
+
+	struct nav_node* node_current = NULL;
 	for (;;)
 	{
 		struct element* elt = minheap_pop(mesh_ctx->openlist);
@@ -963,18 +929,18 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 			RESET((mesh_ctx));
 			return NULL;
 		}
-		current = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
-		if (current == to)
+		node_current = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
+		if (node_current == node_over)
 		{
-			make_waypoint(mesh_ctx,pt0,pt1,current);
+			make_waypoint(mesh_ctx, pt_start, pt_over, node_current);
 			RESET((mesh_ctx));
-			CLEAR_NODE(current);
+			CLEAR_NODE(node_current);
 			return &mesh_ctx->result;
 		}
 
-		LIST_PUSH((&mesh_ctx->closelist),((struct list_node*)current));
+		LIST_PUSH((&mesh_ctx->closelist), ((struct list_node*)node_current));
 
-		struct list* linked = get_link(mesh_ctx,current);
+		struct list* linked = get_link(mesh_ctx, node_current);
 		if (linked)
 		{
 			struct nav_node* linked_node;
@@ -982,26 +948,26 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 			{
 				if (linked_node->elt.index)
 				{
-					double nG = current->G + G_COST(current,linked_node);
+					double nG = node_current->G + G_COST(node_current, linked_node);
 					if (nG < linked_node->G)
 					{
 						linked_node->G = nG;
 						linked_node->F = linked_node->G + linked_node->H;
-						linked_node->link_parent = current;
+						linked_node->link_parent = node_current;
 						linked_node->link_border = linked_node->reserve;
 						MINHEAP_CHANGE(mesh_ctx->openlist, (&linked_node->elt));
 					}
 				}
 				else
 				{
-					linked_node->G = current->G + G_COST(current, linked_node);
-					linked_node->H = H_COST(linked_node,pt1);
+					linked_node->G = node_current->G + G_COST(node_current, linked_node);
+					linked_node->H = H_COST(linked_node,pt_over);
 					linked_node->F = linked_node->G + linked_node->H;
-					linked_node->link_parent = current;
+					linked_node->link_parent = node_current;
 					linked_node->link_border = linked_node->reserve;
 					minheap_push(mesh_ctx->openlist, &linked_node->elt);
-					if (dump != NULL)
-						dump(args, linked_node->id);
+					if (dumper != NULL)
+						dumper(userdata, linked_node->id);
 				}
 			}
 		}
