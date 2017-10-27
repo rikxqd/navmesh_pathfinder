@@ -13,6 +13,8 @@
 
 #define vector3_sub(a,b,result) do {(result)->x = (a)->x - (b)->x;(result)->y = (a)->y - (b)->y;(result)->z = (a)->z - (b)->z;} while(0)
 
+#define cast_node(elt) ((struct nav_node*)((int8_t*)elt - sizeof(struct list_node)))
+
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable)
 {
 	if (mask >= ctx->size)
@@ -253,8 +255,8 @@ double H_COST(struct nav_node* from, struct vector3* to)
 
 int node_cmp(struct element * left, struct element * right) 
 {
-	struct nav_node *l = (struct nav_node*)((int8_t*)left - sizeof(struct list_node));
-	struct nav_node *r = (struct nav_node*)((int8_t*)right - sizeof(struct list_node));
+	struct nav_node *l = cast_node(left);
+	struct nav_node *r = cast_node(right);
 	return l->F < r->F;
 }
 
