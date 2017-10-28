@@ -35,7 +35,7 @@ struct vector3
 	double z;
 };
 
-struct nav_path_context
+struct nav_path
 {
 	struct vector3* wp;
 	int offset;
@@ -135,7 +135,7 @@ struct nav_mesh_context
 	struct nav_mesh_mask mask_ctx;
 
 	//寻路结果缓存
-	struct nav_path_context result;
+	struct nav_path result;
 
 	//获取相邻多边形缓存
 	struct list linked;
@@ -158,7 +158,7 @@ void release_mesh(struct nav_mesh_context* ctx);
 
 struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dumper dumper, void* args);
+struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt0, struct vector3* pt1, search_dumper dumper, void* args);
 bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result);
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);

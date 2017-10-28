@@ -46,7 +46,7 @@ up(struct minheap * mh, int index) {
 	int parent = PARENT(index);
 	while (parent >= 1) {
 		if (mh->less(mh->elts[index], mh->elts[parent])) {
-			MINHEAP_SWAP(mh, index, parent);
+			minheap_swap(mh, index, parent);
 			index = parent;
 			parent = PARENT(index);
 		}
@@ -72,7 +72,7 @@ down(struct minheap * mh, int index) {
 
 		if (min != index)
 		{
-			MINHEAP_SWAP(mh, index, min);
+			minheap_swap(mh, index, min);
 			index = min;
 		}
 		else
@@ -81,18 +81,10 @@ down(struct minheap * mh, int index) {
 }
 
 void
-minheap_change(struct minheap * mh, struct element * elt) {
-	int index = elt->index;
-	down(mh, index);
-	if (index == elt->index)
-		up(mh, index);
-}
-
-void
 minheap_push(struct minheap * mh, struct element * elt) {
 	if (elt->index)
 	{
-		MINHEAP_CHANGE(mh, elt);
+		minheap_change(mh, elt);
 		return;
 	}
 
@@ -115,7 +107,7 @@ struct element *
 	minheap_pop(struct minheap * mh) {
 		if (mh->size > 0) {
 			struct element * elt = mh->elts[1];
-			MINHEAP_SWAP(mh, 1, mh->size);
+			minheap_swap(mh, 1, mh->size);
 			mh->elts[mh->size] = NULL;
 			--mh->size;
 			down(mh, 1);

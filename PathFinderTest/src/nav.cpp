@@ -642,16 +642,16 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 
 static inline void heap_clear(struct element* elt) 
 {
-	struct nav_node *n = (struct nav_node*)((int8_t*)elt - sizeof(struct list_node));
-	clear_node(n);
+	struct nav_node *node = cast_node(elt);
+	clear_node(node);
 }
 
 #define reset(ctx) do \
 {\
-	struct nav_node * n = NULL;\
-	while ((n  = (struct nav_node*)list_pop(&(ctx)->closelist))) \
+	struct nav_node * node = NULL; \
+	while (node = (struct nav_node*)list_pop(&ctx->closelist)) \
 	{\
-		clear_node(n);\
+		clear_node(node); \
 	}\
 	minheap_clear((ctx)->openlist, heap_clear); \
 } while (0)
@@ -681,12 +681,12 @@ struct nav_node* next_border(struct nav_mesh_context* ctx,struct nav_node* node,
 	return NULL;
 }
 
-void result_init(struct nav_mesh_context* mesh_ctx)
+void path_init(struct nav_mesh_context* mesh_ctx)
 {
 	mesh_ctx->result.offset = 0;
 }
 
-void result_add(struct nav_mesh_context* mesh_ctx,struct vector3* wp)
+void path_add(struct nav_mesh_context* mesh_ctx,struct vector3* wp)
 {
 	if (mesh_ctx->result.offset >= mesh_ctx->result.size)
 	{
@@ -705,7 +705,7 @@ void result_add(struct nav_mesh_context* mesh_ctx,struct vector3* wp)
 
 void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct vector3* pt1,struct nav_node * node)
 {
-	result_add(mesh_ctx,pt1);
+	path_add(mesh_ctx, pt1);
 
 	struct vector3* pt_wp = pt1;
 
@@ -739,7 +739,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 
 			if (forward_a < 0 && forward_b > 0)
 			{
-				result_add(mesh_ctx,pt0);
+				path_add(mesh_ctx, pt0);
 				break;
 			}
 			else
@@ -749,12 +749,12 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 					pt_wp->x = pt_left.x;
 					pt_wp->z = pt_left.z;
 
-					result_add(mesh_ctx,pt_wp);
+					path_add(mesh_ctx, pt_wp);
 
 					left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 					if (left_node == NULL)
 					{
-						result_add(mesh_ctx,pt0);
+						path_add(mesh_ctx, pt0);
 						break;
 					}
 					
@@ -781,12 +781,12 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 					pt_wp->x = pt_right.x;
 					pt_wp->z = pt_right.z;
 
-					result_add(mesh_ctx,pt_wp);
+					path_add(mesh_ctx, pt_wp);
 
 					right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 					if (right_node == NULL)
 					{
-						result_add(mesh_ctx,pt0);
+						path_add(mesh_ctx, pt0);
 						break;
 					}
 					
@@ -849,7 +849,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 			left_node = next_border(mesh_ctx,left_node,pt_wp,&link_border);
 			if (left_node == NULL)
 			{
-				result_add(mesh_ctx,pt0);
+				path_add(mesh_ctx, pt0);
 				break;
 			}
 			
@@ -860,7 +860,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 			vector3_sub(&mesh_ctx->vertices[border->a],pt_wp,&vt_left);
 			vector3_sub(&mesh_ctx->vertices[border->b],pt_wp,&vt_right);
 
-			result_add(mesh_ctx,pt_wp);
+			path_add(mesh_ctx, pt_wp);
 
 			tmp = left_node->link_parent;
 			left_node = tmp;
@@ -876,7 +876,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 			right_node = next_border(mesh_ctx,right_node,pt_wp,&link_border);
 			if (right_node == NULL)
 			{
-				result_add(mesh_ctx,pt0);
+				path_add(mesh_ctx, pt0);
 				break;
 			}
 			
@@ -887,7 +887,7 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 			vector3_sub(&mesh_ctx->vertices[border->a],pt_wp,&vt_left);
 			vector3_sub(&mesh_ctx->vertices[border->b],pt_wp,&vt_right);
 
-			result_add(mesh_ctx,pt_wp);
+			path_add(mesh_ctx, pt_wp);
 
 			tmp = right_node->link_parent;
 			left_node = tmp;
@@ -899,9 +899,9 @@ void make_waypoint(struct nav_mesh_context* mesh_ctx,struct vector3* pt0,struct 
 	}
 }
 
-struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt_start, struct vector3* pt_over, search_dumper dumper, void* userdata)
+struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt_start, struct vector3* pt_over, search_dumper dumper, void* userdata)
 {
-	result_init(mesh_ctx);
+	path_init(mesh_ctx);
 
 	struct nav_node* node_start = get_node_with_pos(mesh_ctx, pt_start->x, pt_start->y, pt_start->z);
 	struct nav_node* node_over = get_node_with_pos(mesh_ctx, pt_over->x, pt_over->y, pt_over->z);
@@ -910,7 +910,11 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 		return NULL;
 
 	if (node_start == node_over)
-		return NULL;
+	{
+		path_add(mesh_ctx, pt_start);
+		path_add(mesh_ctx, pt_over);
+		return &mesh_ctx->result;
+	}
 
 	vector3_copy(&node_start->pos, pt_start);
 	
@@ -941,7 +945,7 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 		if (linked)
 		{
 			struct nav_node* linked_node;
-			while ((linked_node = (struct nav_node*)list_pop(linked)))
+			while (linked_node = (struct nav_node*)list_pop(linked))
 			{
 				if (linked_node->elt.index)
 				{
@@ -952,7 +956,7 @@ struct nav_path_context* astar_find(struct nav_mesh_context* mesh_ctx, struct ve
 						linked_node->F = linked_node->G + linked_node->H;
 						linked_node->link_parent = node_current;
 						linked_node->link_border = linked_node->reserve;
-						MINHEAP_CHANGE(mesh_ctx->openlist, (&linked_node->elt));
+						minheap_change(mesh_ctx->openlist, &linked_node->elt);
 					}
 				}
 				else

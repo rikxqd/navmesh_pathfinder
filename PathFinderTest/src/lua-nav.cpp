@@ -43,7 +43,7 @@ int _find(struct lua_State* L)
 	over.x = lua_tonumber(L, 4);
 	over.z = lua_tonumber(L, 5);
 
-	struct nav_path_context* path = astar_find(userdata->ctx, &start, &over,NULL,NULL);
+	struct nav_path* path = astar_find(userdata->ctx, &start, &over, NULL, NULL);
 
 	lua_createtable(L, 64, 0);
 	for (int i = 0; i < path->offset; i++)

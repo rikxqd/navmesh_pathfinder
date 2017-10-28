@@ -39,7 +39,7 @@ void up(struct minheap * mh, int index);
 void down(struct minheap * mh, int index);
 
 
-#define MINHEAP_SWAP(mh,index0,index1) do \
+#define minheap_swap(mh,index0,index1) do \
 {\
 struct element * elt = mh->elts[index0]; \
 	mh->elts[index0] = mh->elts[index1]; \
@@ -49,11 +49,11 @@ struct element * elt = mh->elts[index0]; \
 } while (false);
 
 
-#define MINHEAP_CHANGE(mh,elt) do \
+#define minheap_change(mh,elt) do \
 {\
-	int index = elt->index; \
+	int index = (elt)->index; \
 	down(mh, index); \
-if (index == elt->index)\
+if (index == (elt)->index)\
 	up(mh, index); \
 } while (false);
 
