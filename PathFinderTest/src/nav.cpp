@@ -974,3 +974,25 @@ struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* p
 		}
 	}
 }
+
+struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,double y, int range)
+{
+#ifdef USE_NAV_TILE
+	int x_index = x - ctx->lt.x;
+	int z_index = z - ctx->lt.z;
+	int index = x_index + z_index * ctx->width;
+	struct nav_tile* tile = &ctx->tile[index];
+	int x_min = x_index - range < 0 ? 0 : x_index - range;
+	int x_max = x_index + range > ctx->width ? ctx->width : x_index + range;
+	int z_min = z_index - range < 0 ? 0 : z_index - range;
+	int z_max = z_index + range > ctx->heigh ? ctx->heigh : z_index + range;
+	return NULL;
+#else
+	return NULL;
+#endif
+}
+
+bool point_movable(struct nav_mesh_context* ctx, double x, double z, double y)
+{
+	return false;
+}
