@@ -262,7 +262,7 @@ void CPathFinderTestDlg::DrawPath(struct vector3* path,int size)
 int lua_draw(lua_State* L)
 {
 	CPathFinderTestDlg* self = (CPathFinderTestDlg*)lua_touserdata(L,1);
-	struct nav_path_context* path = (nav_path_context*)lua_touserdata(L,2);
+	struct nav_path* path = (nav_path*)lua_touserdata(L, 2);
 
 	self->DrawPath(path->wp,path->offset);
 	return 0;
@@ -317,7 +317,7 @@ void CPathFinderTestDlg::OnPath()
 		QueryPerformanceCounter(&counterBegin);
 		struct vector3 ptBegin;
 		struct vector3 ptOver;
-		struct nav_path_context* path;
+		struct nav_path* path;
 		for (int i = 0; i < 10000;i++)
 		{
 			
@@ -845,7 +845,7 @@ void CPathFinderTestDlg::OnIgnorePath()
 		LARGE_INTEGER counterBegin, counterEnd;
 		QueryPerformanceCounter(&counterBegin);
 		vector3 vt;
-		struct nav_path_context* path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, NULL);
+		struct nav_path* path = astar_find(mesh_ctx, &ptBegin, &ptOver, NULL, NULL);
 	
 
 		//
