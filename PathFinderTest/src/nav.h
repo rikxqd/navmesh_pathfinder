@@ -163,6 +163,6 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt_start,struct vector
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
 
-struct vector3* around_movable(struct nav_mesh_context*, double, double, double, int, search_dumper, void*);
-
+struct vector3* around_movable(struct nav_mesh_context*, double x, double z, double y, int range, search_dumper, void*);
+bool point_movable(struct nav_mesh_context* ctx, double x, double z, double y);
 #endif

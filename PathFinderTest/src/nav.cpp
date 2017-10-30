@@ -1058,5 +1058,8 @@ struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,do
 
 bool point_movable(struct nav_mesh_context* ctx, double x, double z, double y)
 {
+	struct nav_node* node = get_node_with_pos(ctx, x, y, z);
+	if (node)
+		return true;
 	return false;
 }
