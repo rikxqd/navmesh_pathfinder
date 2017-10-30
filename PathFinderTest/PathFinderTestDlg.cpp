@@ -589,12 +589,49 @@ void CPathFinderTestDlg::DrawBegin(CPoint& pos)
 	Invalidate();
 }
 
+void OnAroundDump(void* self, int index)
+{
+	CPathFinderTestDlg* dlgPtr = (CPathFinderTestDlg*)self;
+	CClientDC dc(dlgPtr);
+	CBrush brush(RGB(66, 66, 66));
+
+	struct nav_tile* tile = &dlgPtr->mesh_ctx->tile[index];
+	CPoint pt[4];
+	
+	
+	CBrush* obrush = dc.SelectObject(&brush);
+
+	for (int j = 0; j < 4; j++)
+	{
+		struct vector3* pos = &tile->pos[j];
+
+		pt[j].x = pos->x*dlgPtr->scale + dlgPtr->xoffset;
+		pt[j].y = pos->z*dlgPtr->scale + dlgPtr->yoffset;
+	}
+	dc.Polygon(pt, 4);
+	dc.SelectObject(obrush);
+}
+
 void CPathFinderTestDlg::DrawOver(CPoint& pos)
 {
-	
-	struct nav_node* node = get_node_with_pos(mesh_ctx,(double)(pos.x-xoffset)/scale,0,(double)(pos.y-yoffset)/scale);
+	double real_x = (double)(pos.x - xoffset) / scale;
+	double real_z = (double)(pos.y - yoffset) / scale;
+	struct nav_node* node = get_node_with_pos(mesh_ctx, real_x, 0, real_z);
 	if (node == NULL)
+	{
+		vector3* pos = around_movable(mesh_ctx, real_x, real_z, 0, 10, OnAroundDump, this);
+		if (pos)
+		{
+			CBrush brush(RGB(66, 88, 188));
+			CClientDC dc(this);
+			CBrush* obrush = dc.SelectObject(&brush);
+			dc.Ellipse(pos->x*scale + xoffset - 3, pos->z*scale + yoffset - 3, pos->x*scale + xoffset + 3, pos->z*scale + yoffset + 3);
+			dc.SelectObject(obrush);
+		}
+	
 		return;
+	}
+		
 
 	if (vtOver != NULL)
 	{

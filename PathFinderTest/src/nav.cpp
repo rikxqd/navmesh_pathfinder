@@ -975,17 +975,84 @@ struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* p
 	}
 }
 
-struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,double y, int range)
+struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,double y, int range,search_dumper dumper,void* userdata)
 {
 #ifdef USE_NAV_TILE
 	int x_index = x - ctx->lt.x;
 	int z_index = z - ctx->lt.z;
-	int index = x_index + z_index * ctx->width;
-	struct nav_tile* tile = &ctx->tile[index];
-	int x_min = x_index - range < 0 ? 0 : x_index - range;
-	int x_max = x_index + range > ctx->width ? ctx->width : x_index + range;
-	int z_min = z_index - range < 0 ? 0 : z_index - range;
-	int z_max = z_index + range > ctx->heigh ? ctx->heigh : z_index + range;
+
+	
+
+	int i;
+	for (i = 1; i <= range; ++i)
+	{
+		int x_min = x_index - i < 0 ? 0 : x_index - i;
+		int x_max = x_index + i > ctx->width ? ctx->width : x_index + i;
+		int z_min = z_index - i < 0 ? 0 : z_index - i;
+		int z_max = z_index + i > ctx->heigh ? ctx->heigh : z_index + i;
+
+		int x,z;
+
+		z = z_min;
+
+		for (x = x_min;x <= x_max;x++)
+		{
+			int index = x + z * ctx->width;
+			struct nav_tile* tile = &ctx->tile[index];
+			if (dumper)
+				dumper(userdata, index);
+			for (int i = 0;i < tile->offset;i++)
+			{
+				if (inside_node(ctx, tile->node[i], tile->center.x, tile->center.y, tile->center.z))
+					return &tile->center;
+			}
+		}
+
+		z = z_max;
+
+		for (x = x_min;x <= x_max;x++)
+		{
+			int index = x + z * ctx->width;
+			struct nav_tile* tile = &ctx->tile[index];
+			if (dumper)
+				dumper(userdata, index);
+			for (int i = 0;i < tile->offset;i++)
+			{
+				if (inside_node(ctx, tile->node[i], tile->center.x, tile->center.y, tile->center.z))
+					return &tile->center;
+			}
+		}
+
+		x = x_min;
+		for (z = z_min+1;z < z_max;z++)
+		{
+			int index = x + z * ctx->width;
+			struct nav_tile* tile = &ctx->tile[index];
+			if (dumper)
+				dumper(userdata, index);
+			for (int i = 0;i < tile->offset;i++)
+			{
+				if (inside_node(ctx, tile->node[i], tile->center.x, tile->center.y, tile->center.z))
+					return &tile->center;
+			}
+		}
+
+		x = x_max;
+		for (z = z_min+1;z < z_max;z++)
+		{
+			int index = x + z * ctx->width;
+			struct nav_tile* tile = &ctx->tile[index];
+			if (dumper)
+				dumper(userdata, index);
+			for (int i = 0;i < tile->offset;i++)
+			{
+				if (inside_node(ctx, tile->node[i], tile->center.x, tile->center.y, tile->center.z))
+					return &tile->center;
+			}
+		}
+	}
+
+
 	return NULL;
 #else
 	return NULL;
