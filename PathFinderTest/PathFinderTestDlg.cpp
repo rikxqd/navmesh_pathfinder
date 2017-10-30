@@ -79,6 +79,7 @@ BEGIN_MESSAGE_MAP(CPathFinderTestDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON5, &CPathFinderTestDlg::OnLoadMesh)
 	ON_BN_CLICKED(IDC_BUTTON6, &CPathFinderTestDlg::OnSaveMesh)
+	ON_BN_CLICKED(IDC_CHECK1, &CPathFinderTestDlg::OnCheck)
 END_MESSAGE_MAP()
 
 
@@ -409,35 +410,41 @@ void CPathFinderTestDlg::DrawMap()
 	}
 
 	obrush = dc.SelectObject(&brush);
-	//CBrush brush_empty0(RGB(255,255,0));
-	//CBrush brush_empty1(RGB(255,0,0));
-	//CBrush brush_empty2(RGB(88,88,0));
-	//for (int i = 0; i < mesh_ctx->width* mesh_ctx->heigh; i++)
-	//{
-	//	struct nav_tile* tile = &mesh_ctx->tile[i];
-	//	CPoint pt[4];
+	CBrush brush_empty0(RGB(255,255,0));
+	CBrush brush_empty1(RGB(255,0,0));
+	CBrush brush_empty2(RGB(88,88,0));
 
-	//	if (tile->offset == 0)
-	//	{
-	//		dc.SelectObject(&brush_empty0);
-	//	}
-	//	else
-	//		dc.SelectObject(&brush_empty1);
-	///*	if (tile->mask == -1)
-	//		dc.SelectObject(&brush_empty0);
-	//	else*/
-	//		//dc.SelectObject(&brush_empty1);
+	int check = ((CButton *)GetDlgItem(IDC_CHECK1))->GetCheck();
+	if (check)
+	{
+		for (int i = 0; i < mesh_ctx->width* mesh_ctx->heigh; i++)
+		{
+			struct nav_tile* tile = &mesh_ctx->tile[i];
+			CPoint pt[4];
 
-	//	for (int j = 0; j < 4; j++)
-	//	{
-	//		struct vector3* pos = &tile->pos[j];
+			if (tile->offset == 0)
+			{
+				dc.SelectObject(&brush_empty0);
+			}
+			else
+				dc.SelectObject(&brush_empty1);
+			/*	if (tile->mask == -1)
+			dc.SelectObject(&brush_empty0);
+			else*/
+			//dc.SelectObject(&brush_empty1);
 
-	//		pt[j].x = pos->x*scale + xoffset + 500;
-	//		pt[j].y = pos->z*scale + yoffset;
-	//	}
-	//	dc.Polygon(pt, 4);
-	//}
-	//dc.SelectObject(obrush);
+			for (int j = 0; j < 4; j++)
+			{
+				struct vector3* pos = &tile->pos[j];
+
+				pt[j].x = pos->x*scale + xoffset;
+				pt[j].y = pos->z*scale + yoffset;
+			}
+			dc.Polygon(pt, 4);
+		}
+	}
+	
+	dc.SelectObject(obrush);
 	
 	if (polyBegin != -1)
 	{
@@ -619,7 +626,7 @@ void CPathFinderTestDlg::DrawOver(CPoint& pos)
 	struct nav_node* node = get_node_with_pos(mesh_ctx, real_x, 0, real_z);
 	if (node == NULL)
 	{
-		vector3* pos = around_movable(mesh_ctx, real_x, real_z, 0, 10, OnAroundDump, this);
+		vector3* pos = around_movable(mesh_ctx, real_x, real_z, 0, 5, OnAroundDump, this);
 		if (pos)
 		{
 			CBrush brush(RGB(66, 88, 188));
@@ -1020,4 +1027,11 @@ void CPathFinderTestDlg::OnLoadMesh()
 void CPathFinderTestDlg::OnSaveMesh()
 {
 	// TODO:  在此添加控件通知处理程序代码
+}
+
+
+void CPathFinderTestDlg::OnCheck()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	Invalidate();
 }

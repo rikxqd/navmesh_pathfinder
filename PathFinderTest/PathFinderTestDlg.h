@@ -59,7 +59,7 @@ public:
 	int sizePath;
 	struct vector3* resultPath;
 	struct lua_State* L;
-
+	bool showTile;
 	LARGE_INTEGER freq;
 public:
 	afx_msg void OnUpdateIddPathfindertestDialog(CCmdUI *pCmdUI);
@@ -76,4 +76,5 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnLoadMesh();
 	afx_msg void OnSaveMesh();
+	afx_msg void OnCheck();
 };
