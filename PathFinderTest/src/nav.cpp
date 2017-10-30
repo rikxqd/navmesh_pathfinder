@@ -100,6 +100,11 @@ bool inside_node(struct nav_mesh_context* mesh_ctx,int polyId,double x,double y,
 
 struct nav_node* get_node_with_pos(struct nav_mesh_context* ctx,double x,double y,double z)
 {
+	if (x < ctx->lt.x || x > ctx->br.x)
+		return NULL;
+	if (z < ctx->lt.z || z > ctx->br.z)
+		return NULL;
+
 #ifndef USE_NAV_TILE
 	//±éÀú²éÕÒ
 	for (int i = 0; i < ctx->size;i++)
@@ -978,16 +983,21 @@ struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* p
 struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,double y, int range,search_dumper dumper,void* userdata)
 {
 #ifdef USE_NAV_TILE
+	if (x < ctx->lt.x || x > ctx->br.x)
+		return NULL;
+	if (z < ctx->lt.z || z > ctx->br.z)
+		return NULL;
+
 	int x_index = x - ctx->lt.x;
 	int z_index = z - ctx->lt.z;
 
 	int r;
 	for (r = 1; r <= range; ++r)
 	{
-		int x_min = x_index - r < 0 ? 0 : x_index - r;
-		int x_max = x_index + r > ctx->width ? ctx->width : x_index + r;
-		int z_min = z_index - r < 0 ? 0 : z_index - r;
-		int z_max = z_index + r > ctx->heigh ? ctx->heigh : z_index + r;
+		int x_min = x_index - r;
+		int x_max = x_index + r;
+		int z_min = z_index - r;
+		int z_max = z_index + r;
 
 		int x,z;
 
@@ -997,7 +1007,12 @@ struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,do
 		for (j = 0; j < 2;j++)
 		{
 			z = z_range[j];
-			for (x = x_min; x <= x_max; x++)
+			if (z < 0 || z >= ctx->heigh)
+				continue;
+			
+			int x_begin = x_min < 0 ? 0 : x_min;
+			int x_end = x_max >= ctx->width ? ctx->width-1 : x_max;
+			for (x = x_begin; x <= x_end; x++)
 			{
 				int index = x + z * ctx->width;
 				struct nav_tile* tile = &ctx->tile[index];
@@ -1016,7 +1031,12 @@ struct vector3* around_movable(struct nav_mesh_context* ctx,double x,double z,do
 		for (j = 0; j < 2;j++)
 		{
 			x = x_range[j];
-			for (z = z_min + 1; z < z_max; z++)
+			if (x < 0 || x >= ctx->width)
+				continue;
+
+			int z_begin = z_min + 1 < 0 ? 0 : z_min + 1;
+			int z_end = z_max >= ctx->heigh ? ctx->heigh-1 : z_max;
+			for (z = z_begin; z < z_end; z++)
 			{
 				int index = x + z * ctx->width;
 				struct nav_tile* tile = &ctx->tile[index];
