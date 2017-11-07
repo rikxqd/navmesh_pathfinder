@@ -159,7 +159,7 @@ void release_mesh(struct nav_mesh_context* ctx);
 struct nav_node* get_node_with_pos(struct nav_mesh_context* mesh_ctx,double x,double y,double z);
 
 struct nav_path* astar_find(struct nav_mesh_context* mesh_ctx, struct vector3* pt_start, struct vector3* pt_over, search_dumper dumper, void* args);
-bool raycast(struct nav_mesh_context* ctx,struct vector3* pt_start,struct vector3* pt_over,struct vector3* result);
+bool raycast(struct nav_mesh_context* ctx, struct vector3* pt_start, struct vector3* pt_over, struct vector3* result, search_dumper dumper, void* userdata);
 
 void set_mask(struct nav_mesh_mask* ctx,int mask,int enable);
 

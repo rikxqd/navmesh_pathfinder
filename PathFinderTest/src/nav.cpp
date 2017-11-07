@@ -74,6 +74,8 @@ bool inside_poly(struct nav_mesh_context* mesh_ctx, int* poly, int size, struct 
 		vt31.z = vt3->z - vt1->z;
 
 		double y = cross(&vt21,&vt31);
+		if (y == 0)
+			continue;
 
 		if (forward == 0)
 			forward = y > 0? 1:-1;
@@ -574,8 +576,9 @@ void release_mesh(struct nav_mesh_context* ctx)
 	free(ctx);
 }
 
-bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt1,struct vector3* result)
+bool raycast(struct nav_mesh_context* ctx, struct vector3* pt0, struct vector3* pt1, struct vector3* result,search_dumper dumper, void* userdata)
 {
+	struct nav_node* prev_node = NULL;
 	struct nav_node* node = get_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
 
 	struct vector3 vt10;
@@ -589,7 +592,7 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 			return true;
 		}
 
-		bool not_cross = true;
+		bool has_next = false;
 		for (int i = 0;i < node->size;i++)
 		{
 			struct nav_border* border = get_border(ctx,node->border[i]);
@@ -604,9 +607,8 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 			double direct_a = cross(&vt30,&vt10);
 			double direct_b = cross(&vt40,&vt10);
 
-			if (direct_a < 0 && direct_b > 0)
+			if (direct_a < 0 && direct_b > 0 || direct_a == 0 || direct_b == 0)
 			{
-				not_cross = false;
 				int next = -1;
 				if (border->node[0] !=-1)
 				{
@@ -621,21 +623,30 @@ bool raycast(struct nav_mesh_context* ctx,struct vector3* pt0,struct vector3* pt
 				if (next == -1)
 				{
 					cross_point(pt3,pt4,pt1,pt0,result);
-					return true;
+					continue;
 				}
 				else
 				{
-					node = get_node(ctx,next);
-					if (get_mask(ctx->mask_ctx,node->mask) == 0)
+					struct nav_node* next_node = get_node(ctx,next);
+					if (next_node == prev_node)
+						continue;
+					
+					if (get_mask(ctx->mask_ctx, next_node->mask) == 0)
 					{
 						cross_point(pt3,pt4,pt1,pt0,result);
-						return true;
+						continue;
 					}
+					if (dumper)
+						dumper(userdata, next);
+
+					has_next = true;
+					prev_node = node;
+					node = next_node;
 					break;
 				}
 			}
 		}
-		if (not_cross)
+		if (!has_next)
 			return false;
 	}
 	return false;

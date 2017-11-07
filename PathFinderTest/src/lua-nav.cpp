@@ -71,7 +71,7 @@ int _raycast(struct lua_State* L)
 	over.x = lua_tonumber(L, 4);
 	over.z = lua_tonumber(L, 5);
 
-	bool ok = raycast(userdata->ctx, &start, &over, &result);
+	bool ok = raycast(userdata->ctx, &start, &over, &result,NULL,NULL);
 	if (ok)
 	{
 		lua_pushboolean(L, 1);
