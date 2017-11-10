@@ -576,26 +576,27 @@ void release_mesh(struct nav_mesh_context* ctx)
 	free(ctx);
 }
 
+
+//FIXME:共线问题
 bool raycast(struct nav_mesh_context* ctx, struct vector3* pt0, struct vector3* pt1, struct vector3* result,search_dumper dumper, void* userdata)
 {
-	struct nav_node* prev_node = NULL;
-	struct nav_node* node = get_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
+	struct nav_node* curr_node = get_node_with_pos(ctx,pt0->x,pt0->y,pt0->z);
 
 	struct vector3 vt10;
 	vector3_sub(pt1,pt0,&vt10);
 
-	while (node)
+	while (curr_node)
 	{
-		if (inside_node(ctx, node->id, pt1->x, pt1->y, pt1->z))
+		if (inside_node(ctx, curr_node->id, pt1->x, pt1->y, pt1->z))
 		{
 			vector3_copy(result,pt1);
 			return true;
 		}
 
 		bool has_next = false;
-		for (int i = 0;i < node->size;i++)
+		for (int i = 0; i < curr_node->size; i++)
 		{
-			struct nav_border* border = get_border(ctx,node->border[i]);
+			struct nav_border* border = get_border(ctx, curr_node->border[i]);
 
 			struct vector3* pt3 = &ctx->vertices[border->a];
 			struct vector3* pt4 = &ctx->vertices[border->b];
@@ -607,41 +608,37 @@ bool raycast(struct nav_mesh_context* ctx, struct vector3* pt0, struct vector3* 
 			double direct_a = cross(&vt30,&vt10);
 			double direct_b = cross(&vt40,&vt10);
 
-			if (direct_a < 0 && direct_b > 0 || direct_a == 0 || direct_b == 0)
+			if ((direct_a < 0 && direct_b > 0) || (direct_a == 0 && direct_b > 0) || (direct_a < 0 && direct_b == 0))
 			{
 				int next = -1;
 				if (border->node[0] !=-1)
 				{
-					if (border->node[0] == node->id)
+					if (border->node[0] == curr_node->id)
 						next = border->node[1];
 					else
 						next = border->node[0];
 				}
 				else
-					assert(border->node[1] == node->id);
+					assert(border->node[1] == curr_node->id);
 				
 				if (next == -1)
 				{
 					cross_point(pt3,pt4,pt1,pt0,result);
-					continue;
+					return false;
 				}
 				else
 				{
 					struct nav_node* next_node = get_node(ctx,next);
-					if (next_node == prev_node)
-						continue;
-					
 					if (get_mask(ctx->mask_ctx, next_node->mask) == 0)
 					{
 						cross_point(pt3,pt4,pt1,pt0,result);
-						continue;
+						return false;
 					}
 					if (dumper)
 						dumper(userdata, next);
 
 					has_next = true;
-					prev_node = node;
-					node = next_node;
+					curr_node = next_node;
 					break;
 				}
 			}
