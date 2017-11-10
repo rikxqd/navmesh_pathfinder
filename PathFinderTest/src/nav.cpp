@@ -593,7 +593,7 @@ bool raycast(struct nav_mesh_context* ctx, struct vector3* pt0, struct vector3* 
 			return true;
 		}
 
-		bool has_next = false;
+		bool crossed = false;
 		for (int i = 0; i < curr_node->size; i++)
 		{
 			struct nav_border* border = get_border(ctx, curr_node->border[i]);
@@ -637,14 +637,14 @@ bool raycast(struct nav_mesh_context* ctx, struct vector3* pt0, struct vector3* 
 					if (dumper)
 						dumper(userdata, next);
 
-					has_next = true;
+					crossed = true;
 					curr_node = next_node;
 					break;
 				}
 			}
 		}
-		if (!has_next)
-			return false;
+		if (!crossed)
+			assert(0);
 	}
 	return false;
 }
