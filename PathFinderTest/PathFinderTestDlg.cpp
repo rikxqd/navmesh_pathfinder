@@ -158,6 +158,7 @@ BOOL CPathFinderTestDlg::OnInitDialog()
 	over.x = 44;
 	over.z = 85;
 	this->mesh_ctx  = load_mesh(v_ptr,v.Size(),p_ptr, p.Size());
+	this->mesh_ctx->tile = create_tile(mesh_ctx);
 	xoffset = 100;
 	yoffset = 50;
 	polyBegin = -1;
@@ -702,15 +703,14 @@ void CPathFinderTestDlg::Straightline()
 		LARGE_INTEGER counterBegin, counterEnd;
 		QueryPerformanceCounter(&counterBegin);
 		vector3 vt;
-		bool ok = raycast(mesh_ctx,&vt0,&vt1,&vt);
+		bool ok = raycast(mesh_ctx, &vt0, &vt1, &vt, NULL,this);
 		QueryPerformanceCounter(&counterEnd);
 
 		double pathCost = (double)((counterEnd.QuadPart - counterBegin.QuadPart) * 1000) / (double)freq.QuadPart;
 		CString str;
 		str.Format(_T("ºÄÊ±:%fms"), pathCost);
 		((CStatic*)GetDlgItem(IDC_STATIC1))->SetWindowTextW(str);
-		if (ok)
-		{
+		
 			POINT from;
 			from.x = vtBegin->x;
 			from.y = vtBegin->z;
@@ -725,7 +725,7 @@ void CPathFinderTestDlg::Straightline()
 			dc.MoveTo(from);
 			dc.LineTo(to);
 			dc.SelectObject(open);
-		}
+		
 	}
 }
 
@@ -771,23 +771,37 @@ void CPathFinderTestDlg::OnIgnoreLine()
 		{
 			set_mask(&mesh_ctx->mask_ctx,i,1);
 		}
-		vector3 vt0;
-		vt0.x = (double)(vtBegin->x-xoffset)/scale;
-		vt0.y = 0;
-		vt0.z = (double)(vtBegin->z-yoffset)/scale;
+		/*	vector3 vt0;
+			vt0.x = (double)(vtBegin->x-xoffset)/scale;
+			vt0.y = 0;
+			vt0.z = (double)(vtBegin->z-yoffset)/scale;
 
-		vector3 vt1;
-		vt1.x = (double)(vtOver->x-xoffset)/scale;
+			vector3 vt1;
+			vt1.x = (double)(vtOver->x-xoffset)/scale;
+			vt1.y = 0;
+			vt1.z = (double)(vtOver->z-yoffset)/scale;*/
+
+		vector3 vt0;
+		vt0.x = 151.04;
+		vt0.y = 0;
+		vt0.z = 62;
+
+		/*vector3 vt1;
+		vt1.x = 151.04;
 		vt1.y = 0;
-		vt1.z = (double)(vtOver->z-yoffset)/scale;
+		vt1.z = 32;
+*/
+		vector3 vt1;
+		vt1.x = 167;
+		vt1.y = 0;
+		vt1.z = 61;
 
 		vector3 vt;
-		bool ok = raycast(mesh_ctx,&vt0,&vt1,&vt);
-		if (ok)
-		{
+		bool ok = raycast(mesh_ctx, &vt0, &vt1, &vt, OnSearchDump, this);
+		
 			POINT from;
-			from.x = vtBegin->x;
-			from.y = vtBegin->z;
+			from.x = vt0.x*scale + xoffset;
+			from.y = vt0.z*scale + yoffset;
 
 			POINT to;
 			to.x = vt.x*scale+xoffset;
@@ -799,7 +813,7 @@ void CPathFinderTestDlg::OnIgnoreLine()
 			dc.MoveTo(from);
 			dc.LineTo(to);
 			dc.SelectObject(open);
-		}
+		
 		set_mask(&mesh_ctx->mask_ctx,0,1);
 	}
 }

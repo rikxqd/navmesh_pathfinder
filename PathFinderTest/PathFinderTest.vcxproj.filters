@@ -144,13 +144,19 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\minheap.cpp">
+    <ClCompile Include="src\nav_tile.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\nav.cpp">
+    <ClCompile Include="src\nav_finder.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\lua-nav.cpp">
+    <ClCompile Include="src\nav_loader.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\minheap.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lua-nav.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
